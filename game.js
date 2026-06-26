@@ -802,11 +802,15 @@ const UI = (() => {
     const s = State.get();
     const team = s.team;
     $('team-name-display').textContent = team.name.toUpperCase();
-    $('team-record-display').textContent = `${team.wins}-${team.losses}`;
+    $('header-cc').textContent = team.cc;
+    $('year-badge').textContent = `Y${s.season.year}`;
     $('stat-morale').textContent = fmtPercent(team.morale);
     $('stat-fans').textContent = fmtPercent(team.fanSupport);
+    $('fan-meter-fill').style.width = `${Math.max(0, Math.min(100, team.fanSupport))}%`;
     $('stat-off-stars').textContent = Economy.starString(Math.ceil(Economy.teamOffenseRating(team) / 20));
-    $('stat-def-stars').textContent = Economy.starString(Math.ceil(Economy.teamDefenseRating(team) / 20));
+    const defStars = Math.max(1, Math.min(5, Math.ceil(Economy.teamDefenseRating(team) / 20)));
+    const defIcon = $('stat-def-icon');
+    defIcon.className = defStars >= 4 ? 'def-good' : defStars <= 2 ? 'def-bad' : 'def-mid';
 
     // Schedule strip
     const track = $('schedule-track');
@@ -818,10 +822,12 @@ const UI = (() => {
       if (g.played) pill.classList.add('is-played');
       const dotClass = idx === s.season.weekIndex ? 'dot-current' : !g.played ? 'dot-future' : g.result === 'W' ? 'dot-win' : 'dot-loss';
       pill.innerHTML = `
+        <span class="wk-info-top">
+          <span class="wk-num">${g.isFinals ? 'FINALS' : 'WEEK ' + g.week}</span>
+          <span class="wk-opp">${g.home ? 'vs' : 'at'} ${g.oppAbbr}</span>
+        </span>
         <span class="wk-dot ${dotClass}"></span>
-        <span class="wk-num">${g.isFinals ? 'FINALS' : 'W' + g.week}</span>
-        <span class="wk-opp">${g.home ? 'vs' : '@'} ${g.oppAbbr}</span>
-        ${g.played ? `<span class="wk-result">${g.result} ${g.homeScore}-${g.awayScore}</span>` : ''}
+        <span class="wk-result">${g.played ? `${g.result} ${g.homeScore}-${g.awayScore}` : ''}</span>
       `;
       track.appendChild(pill);
     });
@@ -834,7 +840,7 @@ const UI = (() => {
     Season.getStandings().forEach((row, i) => {
       const div = document.createElement('div');
       div.className = 'standings-row' + (row.isSelf ? ' is-self' : '');
-      div.innerHTML = `<span><span class="standings-rank">${i + 1}.</span>${row.abbr} — ${row.name}</span><span>${row.wins}-${row.losses}</span>`;
+      div.innerHTML = `<span class="standings-name">${row.name.toUpperCase()}</span><span>${row.wins}</span><span>${row.losses}</span><span>0</span>`;
       list.appendChild(div);
     });
   }

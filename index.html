@@ -22,48 +22,69 @@
          ======================================================== -->
     <section id="view-main-menu" class="view active">
 
-      <!-- TOP 1/4 — Schedule strip -->
+      <!-- HEADER 10% — CC badge / logo+stars / year badge -->
+      <div class="menu-header">
+        <div class="cc-badge">
+          <span class="cc-amount" id="header-cc">0</span><span class="cc-coin">C</span><span class="cc-c">C</span>
+        </div>
+        <div class="menu-title">
+          <span class="title-stars title-stars-left">
+            <span class="ts ts-red">★</span><span class="ts ts-white">★</span><span class="ts ts-blue">★</span>
+          </span>
+          <span class="title-text" id="team-name-display">RETRO HOOPS</span>
+          <span class="title-stars title-stars-right">
+            <span class="ts ts-blue">★</span><span class="ts ts-white">★</span><span class="ts ts-red">★</span>
+          </span>
+        </div>
+        <div class="year-badge" id="year-badge">Y1</div>
+      </div>
+
+      <!-- SCHEDULE BANNER 25% — neon timeline rail with week nodes -->
       <div class="schedule-strip" id="schedule-strip">
         <div class="schedule-track" id="schedule-track"><!-- week pills injected by JS --></div>
       </div>
 
-      <!-- MIDDLE — Team status dashboard -->
-      <div class="team-status">
-        <div class="team-banner">
-          <span id="team-name-display" class="team-name">RETRO HOOPS</span>
-          <span id="team-record-display" class="team-record">0-0</span>
-        </div>
-        <div class="status-grid">
-          <div class="status-card">
-            <span class="status-label">&#128578; Morale</span>
-            <span class="status-value" id="stat-morale">--%</span>
-          </div>
-          <div class="status-card">
-            <span class="status-label">&#128077; Fan Support</span>
-            <span class="status-value" id="stat-fans">--%</span>
-          </div>
-          <div class="status-card">
-            <span class="status-label">Offense</span>
-            <span class="status-value stars" id="stat-off-stars">★★★☆☆</span>
-          </div>
-          <div class="status-card">
-            <span class="status-label">Defense</span>
-            <span class="status-value stars" id="stat-def-stars">★★★☆☆</span>
-          </div>
-        </div>
+      <!-- MAIN CONTENT GRID 50% — standings + metrics -->
+      <div class="menu-grid">
         <div class="standings-box">
-          <div class="standings-title">CONFERENCE STANDINGS</div>
+          <div class="standings-title"><span>LEAGUE STANDINGS</span></div>
+          <div class="standings-header">
+            <span></span><span>W</span><span>L</span><span>T</span>
+          </div>
           <div class="standings-list" id="standings-list"><!-- injected --></div>
+        </div>
+        <div class="metrics-panel">
+          <div class="fan-meter">
+            <div class="fan-meter-title"><span>FANS <span id="stat-fans">--%</span></span></div>
+            <div class="fan-meter-track">
+              <span class="fan-meter-icon">#1</span>
+              <div class="fan-meter-fill" id="fan-meter-fill"></div>
+            </div>
+          </div>
+          <div class="status-row">
+            <div class="status-box">
+              <div class="status-box-title">MORALE</div>
+              <div class="status-box-value"><span class="emoji-icon">&#128578;</span><span id="stat-morale">--%</span></div>
+            </div>
+            <div class="status-box">
+              <div class="status-box-title">OFFENSE</div>
+              <div class="status-box-value stars" id="stat-off-stars">★★★☆☆</div>
+            </div>
+            <div class="status-box">
+              <div class="status-box-title">DEFENSE</div>
+              <div class="status-box-value" id="stat-def-icon">▲</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- BOTTOM — Navigation hub -->
+      <!-- FOOTER 15% — Navigation hub -->
       <nav class="nav-hub" id="nav-hub">
-        <button class="nav-btn nav-btn-icon" data-route="view-settings" title="Settings">&#9881;</button>
+        <button class="nav-btn nav-btn-icon" data-route="view-settings" title="Settings">&#128295;</button>
         <button class="nav-btn" data-route="view-frontoffice">FRONT OFFICE</button>
-        <button class="nav-btn nav-btn-primary" data-route="view-pregame">PLAY NEXT GAME</button>
         <button class="nav-btn" data-route="view-roster">ROSTER</button>
         <button class="nav-btn" data-route="view-hof">HALL OF FAME</button>
+        <button class="nav-btn nav-btn-primary" data-route="view-pregame">CONTINUE</button>
       </nav>
     </section>
 
