@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Retro Hoops</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============================================================
+     APP ROOT — fixed 16:9 responsive stage. Everything lives here.
+     ============================================================ -->
+<div id="app-container">
+  <div id="screen">
+
+    <!-- TOAST / MESSAGE LOG (non-blocking notifications) -->
+    <div id="toast" class="toast"></div>
+
+    <!-- ========================================================
+         MAIN MENU VIEW — The Franchise Dashboard
+         ======================================================== -->
+    <section id="view-main-menu" class="view active">
+
+      <!-- TOP 1/4 — Schedule strip -->
+      <div class="schedule-strip" id="schedule-strip">
+        <div class="schedule-track" id="schedule-track"><!-- week pills injected by JS --></div>
+      </div>
+
+      <!-- MIDDLE — Team status dashboard -->
+      <div class="team-status">
+        <div class="team-banner">
+          <span id="team-name-display" class="team-name">RETRO HOOPS</span>
+          <span id="team-record-display" class="team-record">0-0</span>
+        </div>
+        <div class="status-grid">
+          <div class="status-card">
+            <span class="status-label">Morale</span>
+            <span class="status-value" id="stat-morale">--%</span>
+          </div>
+          <div class="status-card">
+            <span class="status-label">Fan Support</span>
+            <span class="status-value" id="stat-fans">--%</span>
+          </div>
+          <div class="status-card">
+            <span class="status-label">Offense</span>
+            <span class="status-value stars" id="stat-off-stars">★★★☆☆</span>
+          </div>
+          <div class="status-card">
+            <span class="status-label">Defense</span>
+            <span class="status-value stars" id="stat-def-stars">★★★☆☆</span>
+          </div>
+        </div>
+        <div class="standings-box">
+          <div class="standings-title">CONFERENCE STANDINGS</div>
+          <div class="standings-list" id="standings-list"><!-- injected --></div>
+        </div>
+      </div>
+
+      <!-- BOTTOM — Navigation hub -->
+      <nav class="nav-hub" id="nav-hub">
+        <button class="nav-btn" data-route="view-settings">SETTINGS</button>
+        <button class="nav-btn" data-route="view-frontoffice">FRONT OFFICE</button>
+        <button class="nav-btn nav-btn-primary" data-route="view-pregame">PLAY NEXT GAME</button>
+        <button class="nav-btn" data-route="view-roster">ROSTER</button>
+        <button class="nav-btn" data-route="view-hof">HALL OF FAME</button>
+      </nav>
+    </section>
+
+    <!-- ========================================================
+         SETTINGS VIEW
+         ======================================================== -->
+    <section id="view-settings" class="view">
+      <header class="view-header">
+        <button class="back-btn" data-back="view-main-menu">&lt; BACK</button>
+        <h2>SETTINGS</h2>
+      </header>
+      <div class="view-content">
+
+        <div class="setting-block">
+          <div class="setting-title">Quarter Length</div>
+          <div class="btn-row" id="quarter-length-row">
+            <button class="choice-btn" data-quarter="2">2 MIN</button>
+            <button class="choice-btn" data-quarter="3">3 MIN</button>
+            <button class="choice-btn" data-quarter="5">5 MIN</button>
+          </div>
+        </div>
+
+        <div class="setting-block">
+          <div class="setting-title">Difficulty</div>
+          <div class="btn-row" id="difficulty-row">
+            <button class="choice-btn" data-difficulty="easy">EASY</button>
+            <button class="choice-btn" data-difficulty="medium">MEDIUM</button>
+            <button class="choice-btn" data-difficulty="hard">HARD</button>
+            <button class="choice-btn" data-difficulty="extreme">EXTREME</button>
+          </div>
+        </div>
+
+        <div class="setting-block">
+          <div class="setting-title">Franchise</div>
+          <button class="danger-btn" id="btn-exit-game">EXIT GAME (RESET SAVE)</button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================
+         FRONT OFFICE VIEW
+         ======================================================== -->
+    <section id="view-frontoffice" class="view">
+      <header class="view-header">
+        <button class="back-btn" data-back="view-main-menu">&lt; BACK</button>
+        <h2>FRONT OFFICE</h2>
+      </header>
+      <div class="view-content">
+
+        <div class="fo-summary">
+          <div class="fo-summary-card">
+            <span class="fo-summary-label">COACHING CREDITS</span>
+            <span class="fo-summary-value" id="fo-cc">0 CC</span>
+          </div>
+          <div class="fo-summary-card">
+            <span class="fo-summary-label">SALARY CAP ROOM</span>
+            <span class="fo-summary-value" id="fo-cap">$0M / $0M</span>
+          </div>
+          <div class="fo-summary-card">
+            <span class="fo-summary-label">TEAM MORALE</span>
+            <span class="fo-summary-value" id="fo-morale">--%</span>
+          </div>
+        </div>
+
+        <div class="fo-section">
+          <div class="fo-section-title">UPGRADES</div>
+          <div class="upgrade-row" id="upgrade-stadium" data-upgrade="stadium">
+            <div class="upgrade-label">STADIUM <span class="upgrade-level"></span></div>
+            <div class="upgrade-bar"><div class="upgrade-bar-fill"></div></div>
+            <button class="upgrade-btn">UPGRADE <span class="upgrade-cost"></span></button>
+          </div>
+          <div class="upgrade-row" id="upgrade-facilities" data-upgrade="facilities">
+            <div class="upgrade-label">FACILITIES <span class="upgrade-level"></span></div>
+            <div class="upgrade-bar"><div class="upgrade-bar-fill"></div></div>
+            <button class="upgrade-btn">UPGRADE <span class="upgrade-cost"></span></button>
+          </div>
+          <div class="upgrade-row" id="upgrade-rehab" data-upgrade="rehab">
+            <div class="upgrade-label">REHAB <span class="upgrade-level"></span></div>
+            <div class="upgrade-bar"><div class="upgrade-bar-fill"></div></div>
+            <button class="upgrade-btn">UPGRADE <span class="upgrade-cost"></span></button>
+          </div>
+        </div>
+
+        <div class="fo-section">
+          <div class="fo-section-title">SALARY CAP</div>
+          <button class="action-btn" id="btn-increase-cap">INCREASE CAP — 100 CC (+$25M)</button>
+        </div>
+
+        <div class="fo-section">
+          <div class="fo-section-title">STAFF</div>
+          <div class="staff-current" id="staff-current"><!-- injected --></div>
+          <div class="fo-section-subtitle">AVAILABLE HIRES</div>
+          <div class="staff-list" id="staff-list"><!-- injected --></div>
+        </div>
+
+        <div class="fo-section">
+          <div class="fo-section-title">FREE AGENTS</div>
+          <div class="freeagent-list" id="freeagent-list"><!-- injected --></div>
+        </div>
+
+        <div class="fo-section">
+          <div class="fo-section-title">DRAFT PICKS</div>
+          <div class="draft-list" id="draft-list"><!-- injected --></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================
+         ROSTER VIEW
+         ======================================================== -->
+    <section id="view-roster" class="view">
+      <header class="view-header">
+        <button class="back-btn" data-back="view-main-menu">&lt; BACK</button>
+        <h2>ROSTER</h2>
+      </header>
+      <div class="view-content">
+
+        <div class="roster-summary">
+          <span class="status-value stars" id="roster-off-stars">★★★☆☆</span>
+          <span class="status-value stars" id="roster-def-stars">★★★☆☆</span>
+          <span class="fo-summary-value" id="roster-cap">$0M / $0M</span>
+        </div>
+
+        <div class="roster-group-title">STARTERS</div>
+        <div class="roster-list" id="roster-starters"><!-- injected --></div>
+
+        <div class="roster-group-title">BENCH</div>
+        <div class="roster-list" id="roster-bench"><!-- injected --></div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================
+         HALL OF FAME VIEW
+         ======================================================== -->
+    <section id="view-hof" class="view">
+      <header class="view-header">
+        <button class="back-btn" data-back="view-main-menu">&lt; BACK</button>
+        <h2>HALL OF FAME</h2>
+      </header>
+      <div class="view-content">
+
+        <div class="fo-section">
+          <div class="fo-section-title">CHAMPIONSHIPS</div>
+          <div class="hof-rings" id="hof-rings">0 FINALS WON</div>
+        </div>
+
+        <div class="fo-section">
+          <div class="fo-section-title">ACHIEVEMENTS</div>
+          <div class="achievement-list" id="achievement-list"><!-- injected --></div>
+        </div>
+
+        <div class="fo-section">
+          <div class="fo-section-title">ALL-TIME PLAYER RECORDS</div>
+          <div class="records-list" id="records-list"><!-- injected --></div>
+        </div>
+
+        <div class="fo-section">
+          <div class="fo-section-title">RETIRED LEGENDS (PLAYER HOF)</div>
+          <div class="legends-list" id="legends-list"><!-- injected --></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================
+         PRE-GAME VIEW ("Play Next Game")
+         ======================================================== -->
+    <section id="view-pregame" class="view">
+      <header class="view-header">
+        <button class="back-btn" data-back="view-main-menu">&lt; BACK</button>
+        <h2>NEXT GAME</h2>
+      </header>
+      <div class="view-content">
+
+        <div class="matchup-box">
+          <div class="matchup-team">
+            <span class="matchup-name" id="matchup-home-name">RETRO HOOPS</span>
+          </div>
+          <span class="matchup-vs">VS</span>
+          <div class="matchup-team">
+            <span class="matchup-name" id="matchup-away-name">OPPONENT</span>
+          </div>
+        </div>
+
+        <div class="fo-section">
+          <div class="fo-section-title">UNIFORM</div>
+          <div class="btn-row" id="uniform-row">
+            <button class="choice-btn" data-uniform="home">HOME</button>
+            <button class="choice-btn" data-uniform="away">AWAY</button>
+          </div>
+          <div class="uniform-preview" id="uniform-preview"></div>
+        </div>
+
+        <div class="fo-section">
+          <div class="fo-section-title">LINEUP</div>
+          <div class="lineup-quick" id="lineup-quick"><!-- injected mini starters list --></div>
+          <div class="fo-section-subtitle">Tap a starter to swap with bench</div>
+        </div>
+
+        <div class="pregame-actions">
+          <button class="action-btn" id="btn-quicksim-game">QUICK SIM GAME</button>
+          <button class="nav-btn-primary action-btn" id="btn-tipoff">TIP OFF</button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================
+         ACTIVE GAMEPLAY VIEW — canvas court
+         ======================================================== -->
+    <section id="view-game" class="view view-game">
+      <div class="game-hud-top">
+        <span class="hud-score" id="hud-score-home">0</span>
+        <span class="hud-clock" id="hud-clock">12:00</span>
+        <span class="hud-quarter" id="hud-quarter">Q1</span>
+        <span class="hud-score" id="hud-score-away">0</span>
+      </div>
+
+      <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+      <div class="shot-meter" id="shot-meter">
+        <div class="shot-meter-track">
+          <div class="shot-meter-sweetspot"></div>
+          <div class="shot-meter-needle" id="shot-meter-needle"></div>
+        </div>
+      </div>
+
+      <div class="game-log" id="game-log"></div>
+
+      <div class="game-hud-bottom">
+        <span class="control-hint">WASD/ARROWS MOVE · X PASS · Z/SPACE SHOOT</span>
+        <div class="game-controls">
+          <button class="action-btn small-btn" id="btn-quicksim-quarter">SIM QUARTER</button>
+          <button class="action-btn small-btn" id="btn-exit-court">EXIT TO MENU</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         PLAYER DETAIL OVERLAY
+         ======================================================== -->
+    <div id="overlay-player-detail" class="overlay">
+      <div class="overlay-card">
+        <button class="overlay-close" id="player-detail-close">&times;</button>
+        <div class="pd-header">
+          <span class="pd-name" id="pd-name">PLAYER NAME</span>
+          <span class="pd-meta" id="pd-meta">POS · AGE</span>
+        </div>
+        <div class="pd-stars" id="pd-stars">★★★☆☆</div>
+
+        <div class="pd-attributes" id="pd-attributes"><!-- injected attribute bars --></div>
+
+        <div class="pd-stats" id="pd-stats"><!-- injected season stats --></div>
+
+        <div class="pd-contract" id="pd-contract">Contract: $0M</div>
+
+        <div class="pd-actions">
+          <button class="action-btn" id="pd-btn-meeting">MEETING</button>
+          <button class="action-btn" id="pd-btn-trade">TRADE</button>
+          <button class="action-btn" id="pd-btn-bench">BENCH</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
