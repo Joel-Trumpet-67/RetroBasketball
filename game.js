@@ -66,16 +66,16 @@ const Data = (() => {
   // Fictional opponent franchises (avoids real-league branding; abbreviations
   // mirror the style requested in the brief: e.g. BOS / MIA / NYK).
   const OPPONENTS = [
-    { abbr: 'BOS', name: 'Boston Bolts' },
-    { abbr: 'MIA', name: 'Miami Mist' },
-    { abbr: 'NYK', name: 'New York Knights' },
-    { abbr: 'LAX', name: 'LA Lasers' },
-    { abbr: 'CHI', name: 'Chicago Cinders' },
-    { abbr: 'DAL', name: 'Dallas Dust Devils' },
-    { abbr: 'PHX', name: 'Phoenix Phantoms' },
-    { abbr: 'DEN', name: 'Denver Drifters' },
-    { abbr: 'TOR', name: 'Toronto Talons' },
-    { abbr: 'SEA', name: 'Seattle Surge' },
+    { abbr: 'BOS', name: 'Boston Bolts', conf: 'A' },
+    { abbr: 'MIA', name: 'Miami Mist', conf: 'A' },
+    { abbr: 'NYK', name: 'New York Knights', conf: 'A' },
+    { abbr: 'LAX', name: 'LA Lasers', conf: 'A' },
+    { abbr: 'CHI', name: 'Chicago Cinders', conf: 'A' },
+    { abbr: 'DAL', name: 'Dallas Dust Devils', conf: 'N' },
+    { abbr: 'PHX', name: 'Phoenix Phantoms', conf: 'N' },
+    { abbr: 'DEN', name: 'Denver Drifters', conf: 'N' },
+    { abbr: 'TOR', name: 'Toronto Talons', conf: 'N' },
+    { abbr: 'SEA', name: 'Seattle Surge', conf: 'N' },
   ];
 
   const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'];
@@ -132,12 +132,30 @@ const Data = (() => {
   }
 
   // Hireable staff pool. Boosts are flat additions to team off/def ratings.
-  const STAFF_POOL = [
-    { id: 'off1', name: 'Lenny Vance', role: 'Offense', talent: 'Pick-and-Roll Guru (+4 OFF)', boost: { off: 4 }, cost: 40 },
-    { id: 'off2', name: 'Reggie Coles', role: 'Offense', talent: 'Three-Point Specialist (+7 OFF)', boost: { off: 7 }, cost: 70 },
-    { id: 'def1', name: 'Marv Okonkwo', role: 'Defense', talent: 'Lockdown Schemes (+4 DEF)', boost: { def: 4 }, cost: 40 },
-    { id: 'def2', name: 'Dale Pruitt', role: 'Defense', talent: 'Rebounding Drills (+7 DEF)', boost: { def: 7 }, cost: 70 },
-  ];
+  // Regenerated on demand (Staff Hires "REFRESH") rather than a fixed roster.
+  function generateStaffPool(count = 4) {
+    const roles = ['Head', 'Offense', 'Defense'];
+    const pool = [];
+    for (let i = 0; i < count; i++) {
+      const role = pick(roles);
+      const talentTier = randInt(3, 8);
+      const cost = talentTier * 10 + randInt(0, 10);
+      let boost, talent;
+      if (role === 'Head') {
+        const b = Math.round(talentTier * 0.6);
+        boost = { off: b, def: b };
+        talent = `Program Builder (+${b} OFF / +${b} DEF)`;
+      } else if (role === 'Offense') {
+        boost = { off: talentTier };
+        talent = `Offensive Coordinator (+${talentTier} OFF)`;
+      } else {
+        boost = { def: talentTier };
+        talent = `Defensive Coordinator (+${talentTier} DEF)`;
+      }
+      pool.push({ id: uid(), name: generateName(), role, talent, boost, cost });
+    }
+    return pool;
+  }
 
   const ACHIEVEMENTS = [
     { id: 'first_win', name: 'First Win', desc: 'Win your first game.' },
@@ -151,9 +169,9 @@ const Data = (() => {
   ];
 
   return {
-    OPPONENTS, POSITIONS, STAFF_POOL, ACHIEVEMENTS,
+    OPPONENTS, POSITIONS, ACHIEVEMENTS,
     pick, randInt, clamp, uid, generateName,
-    generatePlayer, generateStartingRoster, generateFreeAgents,
+    generatePlayer, generateStartingRoster, generateFreeAgents, generateStaffPool,
   };
 })();
 
@@ -331,7 +349,8 @@ const Economy = (() => {
     if (!starters.length) return 40;
     const avg = starters.reduce((s, p) => s + (p.attrs.shooting * 0.4 + p.attrs.three * 0.35 + p.attrs.speed * 0.25), 0) / starters.length;
     const staffBoost = team.staff && team.staff.offense ? team.staff.offense.boost.off || 0 : 0;
-    return clamp(avg + staffBoost, 1, 99);
+    const headBoost = team.staff && team.staff.head ? team.staff.head.boost.off || 0 : 0;
+    return clamp(avg + staffBoost + headBoost, 1, 99);
   }
 
   function teamDefenseRating(team) {
@@ -339,7 +358,8 @@ const Economy = (() => {
     if (!starters.length) return 40;
     const avg = starters.reduce((s, p) => s + (p.attrs.defense * 0.6 + p.attrs.rebounding * 0.4), 0) / starters.length;
     const staffBoost = team.staff && team.staff.defense ? team.staff.defense.boost.def || 0 : 0;
-    return clamp(avg + staffBoost, 1, 99);
+    const headBoost = team.staff && team.staff.head ? team.staff.head.boost.def || 0 : 0;
+    return clamp(avg + staffBoost + headBoost, 1, 99);
   }
 
   return {
@@ -379,7 +399,7 @@ const State = (() => {
       stadiumLevel: 1,
       facilitiesLevel: 1,
       rehabLevel: 1,
-      staff: { offense: null, defense: null },
+      staff: { head: null, offense: null, defense: null },
       draftPicks: { 1: 1, 2: 1, 3: 1 },
       uniform: 'home',
     };
@@ -389,13 +409,13 @@ const State = (() => {
     state = {
       team,
       opponents,
-      market: { freeAgents: Data.generateFreeAgents(5) },
+      market: { freeAgents: Data.generateFreeAgents(5), staffPool: Data.generateStaffPool(4) },
       season: {
         year: 1,
         weekIndex: 0,        // index into schedule[]
         schedule: Season.generateSchedule(),
       },
-      settings: { quarterLength: 3, difficulty: 'medium' },
+      settings: { quarterLength: 3, difficulty: 'medium', camZoom: false, soundFx: true, autosave: true },
       hof: {
         finalsWon: 0,
         achievementsUnlocked: [],
@@ -408,7 +428,22 @@ const State = (() => {
     return state;
   }
 
+  // Backfills fields added after a save was made, so old localStorage saves
+  // don't crash on missing nested objects.
+  function normalizeState(s) {
+    if (!s) return s;
+    if (!s.team.staff) s.team.staff = { head: null, offense: null, defense: null };
+    if (s.team.staff.head === undefined) s.team.staff.head = null;
+    if (!s.market.staffPool) s.market.staffPool = Data.generateStaffPool(4);
+    if (!s.settings) s.settings = {};
+    if (s.settings.camZoom === undefined) s.settings.camZoom = false;
+    if (s.settings.soundFx === undefined) s.settings.soundFx = true;
+    if (s.settings.autosave === undefined) s.settings.autosave = true;
+    return s;
+  }
+
   function save() {
+    if (state && state.settings && state.settings.autosave === false) return;
     try {
       localStorage.setItem(Config.SAVE_KEY, JSON.stringify(state));
     } catch (e) { /* storage unavailable — fail silently, game still runs in-memory */ }
@@ -418,7 +453,7 @@ const State = (() => {
     try {
       const raw = localStorage.getItem(Config.SAVE_KEY);
       if (!raw) return false;
-      state = JSON.parse(raw);
+      state = normalizeState(JSON.parse(raw));
       return true;
     } catch (e) {
       return false;
@@ -510,6 +545,22 @@ const Season = (() => {
     return rows;
   }
 
+  // Same as getStandings but scoped to one conference ('A' or 'N'). The
+  // player's own franchise has no stored conf field, so it's always treated
+  // as conference 'A'.
+  function getConferenceStandings(conf) {
+    const { team, opponents } = State.get();
+    const rows = [];
+    if (conf === 'A') rows.push({ abbr: team.abbr, name: team.name, wins: team.wins, losses: team.losses, isSelf: true });
+    opponents.filter((o) => o.conf === conf).forEach((o) => rows.push({ abbr: o.abbr, name: o.name, wins: o.wins, losses: o.losses, isSelf: false }));
+    rows.sort((a, b) => {
+      const pctA = a.wins / Math.max(1, a.wins + a.losses);
+      const pctB = b.wins / Math.max(1, b.wins + b.losses);
+      return pctB - pctA;
+    });
+    return rows;
+  }
+
   // Other league games happen "off-screen" each week to keep standings alive.
   function simulateOtherGames() {
     const { opponents } = State.get();
@@ -582,7 +633,7 @@ const Season = (() => {
     UI.toast(`SEASON ${season.year} BEGINS!`);
   }
 
-  return { generateSchedule, getCurrentGame, isSeasonComplete, getStandings, markWeekPlayed, advanceWeek, startNewSeason };
+  return { generateSchedule, getCurrentGame, isSeasonComplete, getStandings, getConferenceStandings, markWeekPlayed, advanceWeek, startNewSeason };
 })();
 
 /* ================================================================
@@ -797,6 +848,49 @@ const UI = (() => {
     toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
   }
 
+  // Keeps every header's CC readout (id="header-cc" plus any .cc-live span)
+  // in sync without re-rendering whole views.
+  function syncHeaderCC() {
+    const cc = State.get().team.cc;
+    document.querySelectorAll('.cc-live').forEach((el) => { el.textContent = cc; });
+  }
+
+  /* ---------------- PROCEDURAL PIXEL-FACE PORTRAITS ----------------
+     Deterministic per-id "face": a flat-color circle + a hair arc, picked
+     by hashing the id so the same player/coach always renders the same
+     face across re-renders, with zero image/font assets. */
+  const SKIN_TONES = ['#e8b48c', '#c68863', '#a8693f', '#8a5430', '#5c3a22'];
+  const HAIR_COLORS = ['#1a1a1a', '#3b2a1a', '#5c4326', '#7a7a7a', '#000000'];
+
+  function hashStr(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
+    return Math.abs(h);
+  }
+
+  function pixelFaceHTML(seed) {
+    const h = hashStr(String(seed));
+    const skin = SKIN_TONES[h % SKIN_TONES.length];
+    const hair = HAIR_COLORS[Math.floor(h / SKIN_TONES.length) % HAIR_COLORS.length];
+    return `<div class="pixel-face" style="background:${skin}"><div class="pixel-face-hair" style="background:${hair}"></div></div>`;
+  }
+
+  /* ---------------- INFO BADGE TOOLTIPS ---------------- */
+  const INFO_TEXT = {
+    frontoffice: 'Upgrade your stadium, facilities and rehab center, hire staff, and manage your salary cap.',
+    freeagents: 'Sign available free agents to your roster. Capped by your salary cap room.',
+    staffhires: 'Hire coaches to permanently boost your team offense and/or defense rating.',
+    roster: 'Tap a player card to view full attributes and take actions like Meeting, Trade, or Bench.',
+    league: 'View standings by conference, the full season schedule, or the playoff bracket.',
+    hof: 'Track your franchise achievements, championships, player records, and retired legends.',
+    draft: 'Sell your owned draft picks for instant Coaching Credits. Tap the badge to sell your lowest-round pick.',
+    difficulty: 'Higher difficulty makes opposing teams play tougher offense and defense.',
+  };
+
+  function showInfo(key) {
+    if (INFO_TEXT[key]) toast(INFO_TEXT[key]);
+  }
+
   /* ---------------- MAIN MENU ---------------- */
   function renderMainMenu() {
     const s = State.get();
@@ -845,127 +939,164 @@ const UI = (() => {
     });
   }
 
-  /* ---------------- SETTINGS ---------------- */
+  /* ---------------- OPTIONS (formerly Settings) ----------------
+     Each cycle-able setting is described once here: its value list,
+     how to read/write it on state, and how to label the current
+     value. cycleOption() (in Events) just advances to the next value. */
+  const OPTION_CYCLES = {
+    quarterLength: { values: [2, 3, 5], get: (s) => s.settings.quarterLength, set: (s, v) => { s.settings.quarterLength = v; }, label: (v) => `${v} MIN` },
+    difficulty: { values: ['easy', 'medium', 'hard', 'extreme'], get: (s) => s.settings.difficulty, set: (s, v) => { s.settings.difficulty = v; }, label: (v) => v.toUpperCase() },
+    camZoom: { values: [false, true], get: (s) => s.settings.camZoom, set: (s, v) => { s.settings.camZoom = v; }, label: (v) => (v ? 'ON' : 'OFF') },
+    soundFx: { values: [true, false], get: (s) => s.settings.soundFx, set: (s, v) => { s.settings.soundFx = v; }, label: (v) => (v ? 'ON' : 'OFF') },
+    autosave: { values: [true, false], get: (s) => s.settings.autosave, set: (s, v) => { s.settings.autosave = v; }, label: (v) => (v ? 'ON' : 'OFF') },
+    uniform: { values: ['home', 'away'], get: (s) => s.team.uniform, set: (s, v) => { s.team.uniform = v; }, label: (v) => v.toUpperCase() },
+  };
+
   function renderSettings() {
     const s = State.get();
-    document.querySelectorAll('#quarter-length-row .choice-btn').forEach((btn) => {
-      btn.classList.toggle('is-active', Number(btn.dataset.quarter) === s.settings.quarterLength);
+    Object.keys(OPTION_CYCLES).forEach((key) => {
+      const btn = $(`opt-${key}`);
+      if (btn) btn.textContent = OPTION_CYCLES[key].label(OPTION_CYCLES[key].get(s));
     });
-    document.querySelectorAll('#difficulty-row .choice-btn').forEach((btn) => {
-      btn.classList.toggle('is-active', btn.dataset.difficulty === s.settings.difficulty);
-    });
+  }
+
+  function cycleOption(key) {
+    const cfg = OPTION_CYCLES[key];
+    if (!cfg) return;
+    const s = State.get();
+    const current = cfg.get(s);
+    const idx = cfg.values.indexOf(current);
+    const next = cfg.values[(idx + 1) % cfg.values.length];
+    cfg.set(s, next);
+    State.save();
+    renderSettings();
+  }
+
+  /* ---------------- SHARED CARD/ROW BUILDERS ---------------- */
+  function listRowHTML(name, sub, actionHTML) {
+    return `<div class="list-row"><div class="list-row-info"><span class="list-row-name">${name}</span><span class="list-row-sub">${sub}</span></div>${actionHTML || ''}</div>`;
+  }
+
+  // Generic player card used by Roster (click-to-open-detail) and the Free
+  // Agents marketplace grid (cost label + SIGN button instead).
+  function playerCardHTML(p, opts) {
+    opts = opts || {};
+    const stars = Economy.starRating(p);
+    const moraleIcon = p.morale >= 70 ? '\u{1F642}' : p.morale >= 40 ? '\u{1F610}' : '\u{1F641}';
+    return `
+      <div class="player-card${opts.isStarter ? ' is-starter' : ''}" data-player-id="${p.id}">
+        ${opts.showMorale ? `<span class="player-card-morale-icon">${moraleIcon}</span>` : ''}
+        <div class="player-card-portrait">${pixelFaceHTML(p.id)}</div>
+        <span class="player-card-pos">${p.pos}</span>
+        <div class="player-card-info">
+          <span class="player-card-name">${p.name}</span>
+          <span class="player-card-stars">${Economy.starString(stars)}</span>
+        </div>
+        ${opts.costLabel ? `<span class="player-card-cost">${opts.costLabel}</span>` : ''}
+        ${opts.actionHTML || ''}
+      </div>
+    `;
+  }
+
+  function staffHireCardHTML(coach, team) {
+    const isHired = ['head', 'offense', 'defense'].some((r) => team.staff[r] && team.staff[r].id === coach.id);
+    return `
+      <div class="player-card">
+        <div class="player-card-portrait">${pixelFaceHTML(coach.id)}</div>
+        <span class="player-card-pos">${coach.role.toUpperCase()}</span>
+        <div class="player-card-info">
+          <span class="player-card-name">${coach.name}</span>
+          <span class="player-card-stars">${coach.talent}</span>
+        </div>
+        <span class="player-card-cost">${coach.cost} CC</span>
+        <button class="mini-btn player-card-action" data-hire-staff="${coach.id}" ${isHired || team.cc < coach.cost ? 'disabled' : ''}>${isHired ? 'HIRED' : 'HIRE'}</button>
+      </div>
+    `;
+  }
+
+  function staffCardHTML(role, coach) {
+    const roleLabel = `${role.toUpperCase()} COACH`;
+    const portrait = coach ? pixelFaceHTML(coach.id) : '<div class="pixel-face" style="background:var(--color-shadow)"></div>';
+    const name = coach ? coach.name : 'VACANT';
+    return `<div class="staff-mini-card"><div class="staff-mini-portrait">${portrait}</div><div class="staff-mini-info"><span class="staff-mini-role">${roleLabel}</span><span class="staff-mini-name">${name}</span></div></div>`;
   }
 
   /* ---------------- FRONT OFFICE ---------------- */
   function renderFrontOffice() {
     const s = State.get();
     const team = s.team;
-    $('fo-cc').textContent = `${team.cc} CC`;
-    $('fo-cap').textContent = `${fmtMoney(Economy.getCapUsed(team))} / ${fmtMoney(Economy.getTotalCap(team))}`;
-    $('fo-morale').textContent = fmtPercent(team.morale);
 
-    renderUpgradeRow('stadium', team.stadiumLevel, Economy.getUpgradeCost(team.stadiumLevel, 15), team.cc);
-    renderUpgradeRow('facilities', team.facilitiesLevel, Economy.getUpgradeCost(team.facilitiesLevel, 12), team.cc);
-    renderUpgradeRow('rehab', team.rehabLevel, Economy.getUpgradeCost(team.rehabLevel, 10), team.cc);
+    $('bar-cap-fill').style.width = `${Math.min(100, (Economy.getCapUsed(team) / Economy.getTotalCap(team)) * 100)}%`;
+
+    [['stadium', team.stadiumLevel, 15], ['facilities', team.facilitiesLevel, 12], ['rehab', team.rehabLevel, 10]].forEach(([key, level, ccPerLevel]) => {
+      const cost = Economy.getUpgradeCost(level, ccPerLevel);
+      const maxed = level >= Config.MAX_UPGRADE_LEVEL;
+      $(`bar-${key}-fill`).style.width = `${(level / Config.MAX_UPGRADE_LEVEL) * 100}%`;
+      $(`cost-${key}`).textContent = maxed ? 'MAX' : cost;
+      const costBtn = document.querySelector(`[data-upgrade="${key}"]`);
+      if (costBtn) costBtn.disabled = maxed || team.cc < cost;
+    });
 
     $('btn-increase-cap').disabled = team.cc < Config.CAP_INCREASE_COST_CC;
 
-    // Staff
-    const staffCurrent = $('staff-current');
-    staffCurrent.innerHTML = '';
-    ['offense', 'defense'].forEach((role) => {
-      const coach = team.staff[role];
-      const row = document.createElement('div');
-      row.className = 'list-row';
-      row.innerHTML = `<div class="list-row-info"><span class="list-row-name">${role.toUpperCase()} COACH</span><span class="list-row-sub">${coach ? coach.name + ' — ' + coach.talent : 'Vacant'}</span></div>`;
-      staffCurrent.appendChild(row);
-    });
+    $('staff-cards').innerHTML = ['head', 'offense', 'defense'].map((role) => staffCardHTML(role, team.staff[role])).join('');
 
-    const staffList = $('staff-list');
-    staffList.innerHTML = '';
-    Data.STAFF_POOL.forEach((coach) => {
-      const roleKey = coach.role.toLowerCase();
-      const isHired = team.staff[roleKey] && team.staff[roleKey].id === coach.id;
-      const row = document.createElement('div');
-      row.className = 'list-row';
-      row.innerHTML = `
-        <div class="list-row-info"><span class="list-row-name">${coach.name}</span><span class="list-row-sub">${coach.talent} · ${coach.cost} CC</span></div>
-        <button class="mini-btn" data-hire-staff="${coach.id}" ${isHired || team.cc < coach.cost ? 'disabled' : ''}>${isHired ? 'HIRED' : 'HIRE'}</button>
-      `;
-      staffList.appendChild(row);
-    });
-
-    // Free agents
-    const faList = $('freeagent-list');
-    faList.innerHTML = '';
-    s.market.freeAgents.forEach((p) => {
-      const row = document.createElement('div');
-      row.className = 'list-row';
-      row.innerHTML = `
-        <div class="list-row-info"><span class="list-row-name">${p.name} (${p.pos})</span><span class="list-row-sub">${Economy.starString(Economy.starRating(p))} · ${fmtMoney(p.contract)}</span></div>
-        <button class="mini-btn" data-sign-fa="${p.id}" ${Economy.getCapRoom(team) < p.contract ? 'disabled' : ''}>SIGN</button>
-      `;
-      faList.appendChild(row);
-    });
-
-    // Draft picks
-    const draftList = $('draft-list');
-    draftList.innerHTML = '';
-    [1, 2, 3].forEach((round) => {
-      const count = team.draftPicks[round] || 0;
-      const row = document.createElement('div');
-      row.className = 'list-row';
-      row.innerHTML = `
-        <div class="list-row-info"><span class="list-row-name">ROUND ${round} PICKS</span><span class="list-row-sub">Owned: ${count}</span></div>
-        <button class="mini-btn" data-sell-pick="${round}" ${count < 1 ? 'disabled' : ''}>SELL FOR ${Economy.draftPickSellValue(round)} CC</button>
-      `;
-      draftList.appendChild(row);
-    });
+    $('draft-badge-value').textContent = `${team.draftPicks[1] || 0}-${team.draftPicks[2] || 0}-${team.draftPicks[3] || 0}`;
   }
 
-  function renderUpgradeRow(key, level, cost, cc) {
-    const row = $(`upgrade-${key}`);
-    row.querySelector('.upgrade-level').textContent = `LVL ${level}/${Config.MAX_UPGRADE_LEVEL}`;
-    row.querySelector('.upgrade-bar-fill').style.width = `${(level / Config.MAX_UPGRADE_LEVEL) * 100}%`;
-    const btn = row.querySelector('.upgrade-btn');
-    const maxed = level >= Config.MAX_UPGRADE_LEVEL;
-    btn.innerHTML = maxed ? 'MAX' : `UPGRADE <span class="upgrade-cost">${cost} CC</span>`;
-    btn.disabled = maxed || cc < cost;
+  /* ---------------- FREE AGENTS / STAFF HIRES MARKETPLACES ---------------- */
+  function renderFreeAgents() {
+    const s = State.get();
+    const team = s.team;
+    $('fa-current-list').innerHTML = team.roster.length
+      ? team.roster.map((p) => listRowHTML(`${p.pos} — ${p.name}`, `${Economy.starString(Economy.starRating(p))} · ${fmtMoney(p.contract)}`)).join('')
+      : listRowHTML('Empty roster', 'Sign a free agent to get started.');
+    $('fa-available-grid').innerHTML = s.market.freeAgents.length
+      ? s.market.freeAgents.map((p) => playerCardHTML(p, {
+          costLabel: fmtMoney(p.contract),
+          actionHTML: `<button class="mini-btn player-card-action" data-sign-fa="${p.id}" ${Economy.getCapRoom(team) < p.contract ? 'disabled' : ''}>SIGN</button>`,
+        })).join('')
+      : '<div class="list-row"><span class="list-row-sub">No free agents available.</span></div>';
+  }
+
+  function renderStaffHires() {
+    const s = State.get();
+    const team = s.team;
+    $('staff-current-list').innerHTML = ['head', 'offense', 'defense'].map((role) =>
+      listRowHTML(`${role.toUpperCase()} COACH`, team.staff[role] ? `${team.staff[role].name} — ${team.staff[role].talent}` : 'Vacant')
+    ).join('');
+    $('staff-available-grid').innerHTML = s.market.staffPool.length
+      ? s.market.staffPool.map((coach) => staffHireCardHTML(coach, team)).join('')
+      : '<div class="list-row"><span class="list-row-sub">No coaches available.</span></div>';
   }
 
   /* ---------------- ROSTER ---------------- */
+  let rosterFilterStartersOnly = false;
+
+  function toggleRosterFilter() {
+    rosterFilterStartersOnly = !rosterFilterStartersOnly;
+    renderRoster();
+  }
+
   function renderRoster() {
     const s = State.get();
     const team = s.team;
+    $('roster-subtitle').textContent = `PLAYERS ${team.roster.length}/${Config.ROSTER_SIZE}`;
+    $('roster-stat-morale').textContent = fmtPercent(team.morale);
     $('roster-off-stars').textContent = Economy.starString(Math.ceil(Economy.teamOffenseRating(team) / 20));
-    $('roster-def-stars').textContent = Economy.starString(Math.ceil(Economy.teamDefenseRating(team) / 20));
-    $('roster-cap').textContent = `${fmtMoney(Economy.getCapRoom(team))} room`;
+    const defStars = Math.max(1, Math.min(5, Math.ceil(Economy.teamDefenseRating(team) / 20)));
+    const defIcon = $('roster-def-icon');
+    defIcon.className = defStars >= 4 ? 'def-good' : defStars <= 2 ? 'def-bad' : 'def-mid';
+    $('roster-cap-title').textContent = `SALARY CAP — ${fmtMoney(Economy.getCapRoom(team))} ROOM`;
+    $('roster-cap-fill').style.width = `${Math.min(100, (Economy.getCapUsed(team) / Economy.getTotalCap(team)) * 100)}%`;
 
-    const starters = team.roster.filter((p) => team.starterIds.includes(p.id));
-    const bench = team.roster.filter((p) => !team.starterIds.includes(p.id));
+    const filterBtn = $('btn-roster-filter');
+    if (filterBtn) filterBtn.classList.toggle('nav-btn-primary', rosterFilterStartersOnly);
 
-    renderRosterList('roster-starters', starters);
-    renderRosterList('roster-bench', bench);
-  }
-
-  function renderRosterList(containerId, players) {
-    const container = $(containerId);
-    container.innerHTML = '';
-    players.forEach((p) => {
-      const row = document.createElement('div');
-      row.className = 'roster-row';
-      row.dataset.playerId = p.id;
-      row.innerHTML = `
-        <span class="roster-pos">${p.pos}</span>
-        <span class="roster-name">${p.name}</span>
-        <span class="roster-morale">${p.morale}% mor.</span>
-        <span class="roster-ovr">${Economy.starString(Economy.starRating(p))}</span>
-      `;
-      container.appendChild(row);
-    });
-    if (!players.length) {
-      container.innerHTML = '<div class="list-row"><span class="list-row-sub">Empty — sign a Free Agent.</span></div>';
-    }
+    const players = rosterFilterStartersOnly ? team.roster.filter((p) => team.starterIds.includes(p.id)) : team.roster;
+    $('roster-cards').innerHTML = players.length
+      ? players.map((p) => playerCardHTML(p, { showMorale: true, isStarter: team.starterIds.includes(p.id) })).join('')
+      : '<div class="list-row"><span class="list-row-sub">Empty — sign a Free Agent.</span></div>';
   }
 
   /* ---------------- PLAYER DETAIL OVERLAY ---------------- */
@@ -1010,33 +1141,90 @@ const UI = (() => {
 
   function getSelectedPlayerId() { return selectedPlayerId; }
 
+  /* ---------------- LEAGUE & STANDINGS ---------------- */
+  let leagueTab = 'view';
+  function setLeagueTab(tab) { leagueTab = tab; renderLeague(); }
+
+  function standingsRowsHTML(rows) {
+    return rows.map((row) => `<div class="standings-row${row.isSelf ? ' is-self' : ''}"><span class="standings-name">${row.name.toUpperCase()}</span><span>${row.wins}</span><span>${row.losses}</span><span>0</span></div>`).join('');
+  }
+  function tieredConfColumnHTML(conf, title) {
+    const rows = Season.getConferenceStandings(conf);
+    const tiers = [['DIVISION LEADER', rows.slice(0, 1)], ['WILD CARD', rows.slice(1, 3)], ['IN THE HUNT', rows.slice(3)]];
+    const body = tiers.map(([label, group]) => (group.length ? `<div class="standings-tier-label">${label}</div>${standingsRowsHTML(group)}` : '')).join('');
+    return `<div class="standings-box" style="height:100%"><div class="standings-title"><span>${title}</span></div><div class="standings-header"><span></span><span>W</span><span>L</span><span>T</span></div><div class="standings-list">${body}</div></div>`;
+  }
+  function confColumnHTML(conf, title) {
+    const rows = Season.getConferenceStandings(conf);
+    return `<div class="standings-box" style="height:100%"><div class="standings-title"><span>${title}</span></div><div class="standings-header"><span></span><span>W</span><span>L</span><span>T</span></div><div class="standings-list">${standingsRowsHTML(rows)}</div></div>`;
+  }
+  function scheduleListHTML() {
+    const s = State.get();
+    return s.season.schedule.map((g) => {
+      const label = g.isFinals ? 'FINALS' : `WEEK ${g.week}`;
+      const opp = `${g.home ? 'vs' : 'at'} ${g.oppAbbr}`;
+      const sub = g.played ? `${opp} — ${g.result} ${g.homeScore}-${g.awayScore}` : opp;
+      return listRowHTML(label, sub);
+    }).join('');
+  }
+  function playoffsHTML() {
+    const s = State.get();
+    const finals = s.season.schedule.find((g) => g.isFinals);
+    const body = !finals
+      ? listRowHTML('No playoff data', 'Complete the regular season to unlock the Finals.')
+      : listRowHTML('FINALS', finals.played ? `${finals.result} ${finals.homeScore}-${finals.awayScore}` : `${finals.home ? 'vs' : 'at'} ${finals.oppName}`);
+    return `<div class="titled-box" style="height:100%"><span class="titled-box-title"><span>CHAMPIONSHIP</span></span><div class="hof-list">${body}</div></div>`;
+  }
+  function renderLeague() {
+    const content = $('league-content');
+    document.querySelectorAll('#league-tabs .tab-btn').forEach((btn) => btn.classList.toggle('is-active', btn.dataset.leagueTab === leagueTab));
+    if (leagueTab === 'view') content.innerHTML = `<div class="league-conf-grid">${tieredConfColumnHTML('A', 'CONFERENCE A')}${tieredConfColumnHTML('N', 'CONFERENCE N')}</div>`;
+    else if (leagueTab === 'confA') content.innerHTML = confColumnHTML('A', 'CONFERENCE A');
+    else if (leagueTab === 'confN') content.innerHTML = confColumnHTML('N', 'CONFERENCE N');
+    else if (leagueTab === 'schedule') content.innerHTML = `<div class="titled-box" style="height:100%"><span class="titled-box-title"><span>SEASON SCHEDULE</span></span><div class="hof-list">${scheduleListHTML()}</div></div>`;
+    else if (leagueTab === 'playoffs') content.innerHTML = playoffsHTML();
+  }
+
   /* ---------------- HALL OF FAME ---------------- */
+  let hofTab = 'achievements';
+  function setHofTab(tab) { hofTab = tab; renderHOF(); }
+
+  function hofAchievementsHTML(s) {
+    return Data.ACHIEVEMENTS.map((a) => {
+      const unlocked = s.hof.achievementsUnlocked.includes(a.id);
+      return listRowHTML(`${unlocked ? '✓' : '☐'} ${a.name}`, a.desc);
+    }).join('');
+  }
+  function hofChampionshipsHTML(s) {
+    if (!s.hof.finalsWon) return listRowHTML('No championships yet', 'Win the Finals to add a banner.');
+    return Array.from({ length: s.hof.finalsWon }, (_, i) => listRowHTML(`🏆 Championship #${i + 1}`, 'Retro Hoops Champion')).join('');
+  }
+  function hofRecordsHTML(s) {
+    const r = s.hof.records;
+    return [
+      listRowHTML('Career Points', r.topScorer ? `${r.topScorer.name} — ${r.topScorer.value}` : '—'),
+      listRowHTML('Career Rebounds', r.topRebounder ? `${r.topRebounder.name} — ${r.topRebounder.value}` : '—'),
+      listRowHTML('Career Assists', r.topAssister ? `${r.topAssister.name} — ${r.topAssister.value}` : '—'),
+    ].join('');
+  }
+  function hofLegendsHTML(s) {
+    return s.hof.legends.length
+      ? s.hof.legends.map((l) => listRowHTML(`${l.name} (${l.pos})`, Economy.starString(l.stars))).join('')
+      : listRowHTML('No legends retired yet', 'Veteran players retire here over time.');
+  }
   function renderHOF() {
     const s = State.get();
-    $('hof-rings').textContent = `${s.hof.finalsWon} FINALS WON`;
-
-    const achList = $('achievement-list');
-    achList.innerHTML = '';
-    Data.ACHIEVEMENTS.forEach((a) => {
-      const unlocked = s.hof.achievementsUnlocked.includes(a.id);
-      const row = document.createElement('div');
-      row.className = 'list-row achievement-row ' + (unlocked ? 'unlocked' : 'locked');
-      row.innerHTML = `<div class="list-row-info"><span class="list-row-name">${unlocked ? '✓' : '☐'} ${a.name}</span><span class="list-row-sub">${a.desc}</span></div>`;
-      achList.appendChild(row);
-    });
-
-    const records = $('records-list');
-    const r = s.hof.records;
-    records.innerHTML = `
-      <div class="list-row"><span class="list-row-name">Career Points</span><span>${r.topScorer ? r.topScorer.name + ' — ' + r.topScorer.value : '—'}</span></div>
-      <div class="list-row"><span class="list-row-name">Career Rebounds</span><span>${r.topRebounder ? r.topRebounder.name + ' — ' + r.topRebounder.value : '—'}</span></div>
-      <div class="list-row"><span class="list-row-name">Career Assists</span><span>${r.topAssister ? r.topAssister.name + ' — ' + r.topAssister.value : '—'}</span></div>
-    `;
-
-    const legends = $('legends-list');
-    legends.innerHTML = s.hof.legends.length
-      ? s.hof.legends.map((l) => `<div class="list-row"><span class="list-row-name">${l.name} (${l.pos})</span><span>${Economy.starString(l.stars)}</span></div>`).join('')
-      : '<div class="list-row"><span class="list-row-sub">No legends retired yet.</span></div>';
+    document.querySelectorAll('#hof-tabs .tab-btn').forEach((btn) => btn.classList.toggle('is-active', btn.dataset.hofTab === hofTab));
+    const pct = Math.round((s.hof.achievementsUnlocked.length / Data.ACHIEVEMENTS.length) * 100);
+    const titles = {
+      achievements: `— ACHIEVEMENTS ${pct}% —`,
+      championships: `— ${s.hof.finalsWon} CHAMPIONSHIP${s.hof.finalsWon === 1 ? '' : 'S'} —`,
+      records: '— CAREER RECORDS —',
+      legends: '— RETIRED LEGENDS —',
+    };
+    const bodies = { achievements: hofAchievementsHTML, championships: hofChampionshipsHTML, records: hofRecordsHTML, legends: hofLegendsHTML };
+    $('hof-box-title').textContent = titles[hofTab];
+    $('hof-list').innerHTML = bodies[hofTab](s);
   }
 
   /* ---------------- PRE-GAME ---------------- */
@@ -1100,11 +1288,15 @@ const UI = (() => {
 
   /* ---------------- ROUTER HOOK ---------------- */
   function onShowView(viewId) {
+    syncHeaderCC();
     switch (viewId) {
       case 'view-main-menu': renderMainMenu(); break;
       case 'view-settings': renderSettings(); break;
       case 'view-frontoffice': renderFrontOffice(); break;
       case 'view-roster': renderRoster(); break;
+      case 'view-freeagents': renderFreeAgents(); break;
+      case 'view-staffhires': renderStaffHires(); break;
+      case 'view-league': renderLeague(); break;
       case 'view-hof': renderHOF(); break;
       case 'view-pregame': renderPregame(); break;
       default: break;
@@ -1114,9 +1306,12 @@ const UI = (() => {
   function renderActiveSubview() { onShowView(State.getCurrentView()); }
 
   return {
-    toast, renderMainMenu, renderSettings, renderFrontOffice, renderRoster,
+    toast, syncHeaderCC, showInfo, renderMainMenu, renderSettings, cycleOption,
+    renderFrontOffice, renderFreeAgents, renderStaffHires,
+    renderRoster, toggleRosterFilter,
     openPlayerDetail, closePlayerDetail, getSelectedPlayerId,
-    renderHOF, renderPregame, updateGameHUD, pushGameLog, clearGameLog, updatePlayerCallout,
+    renderLeague, setLeagueTab, renderHOF, setHofTab,
+    renderPregame, updateGameHUD, pushGameLog, clearGameLog, updatePlayerCallout,
     onShowView, renderActiveSubview, fmtMoney, fmtPercent,
   };
 })();
@@ -1142,21 +1337,15 @@ const Events = (() => {
     const backBtn = target.closest('[data-back]');
     if (backBtn) { State.showView(backBtn.dataset.back); return; }
 
-    // --- Settings ---
-    const quarterBtn = target.closest('[data-quarter]');
-    if (quarterBtn) {
-      State.get().settings.quarterLength = Number(quarterBtn.dataset.quarter);
-      State.save();
-      UI.renderSettings();
-      return;
-    }
-    const diffBtn = target.closest('[data-difficulty]');
-    if (diffBtn) {
-      State.get().settings.difficulty = diffBtn.dataset.difficulty;
-      State.save();
-      UI.renderSettings();
-      return;
-    }
+    // --- Info badges (must be checked before any container they sit inside,
+    // e.g. the draft badge, so the "i" tap doesn't fall through to it) ---
+    const infoBtn = target.closest('[data-info]');
+    if (infoBtn) { UI.showInfo(infoBtn.dataset.info); return; }
+
+    // --- Options: cycling value buttons ---
+    const cycleBtn = target.closest('[data-cycle]');
+    if (cycleBtn) { UI.cycleOption(cycleBtn.dataset.cycle); return; }
+
     if (target.id === 'btn-exit-game') {
       if (confirm('Reset your franchise and start a brand new save?')) {
         State.reset();
@@ -1165,12 +1354,13 @@ const Events = (() => {
       }
       return;
     }
+    if (target.id === 'btn-exhibition') { doExhibitionGame(); return; }
 
     // --- Front Office: upgrades ---
-    const upgradeRow = target.closest('[data-upgrade]');
-    if (upgradeRow && target.closest('.upgrade-btn')) {
+    const upgradeBtn = target.closest('[data-upgrade]');
+    if (upgradeBtn) {
       const team = State.get().team;
-      const kind = upgradeRow.dataset.upgrade;
+      const kind = upgradeBtn.dataset.upgrade;
       const fn = { stadium: Economy.upgradeStadium, facilities: Economy.upgradeFacilities, rehab: Economy.upgradeRehab }[kind];
       if (fn && fn(team)) { State.save(); UI.renderFrontOffice(); UI.toast(`${kind.toUpperCase()} UPGRADED`); }
       return;
@@ -1184,21 +1374,24 @@ const Events = (() => {
       return;
     }
 
-    // --- Front Office: staff ---
-    const hireBtn = target.closest('[data-hire-staff]');
-    if (hireBtn) {
+    // --- Front Office: draft pick badge (sell the lowest-round owned pick) ---
+    const draftBadge = target.closest('#draft-badge');
+    if (draftBadge) {
       const team = State.get().team;
-      const coach = Data.STAFF_POOL.find((c) => c.id === hireBtn.dataset.hireStaff);
-      if (coach && team.cc >= coach.cost) {
-        team.cc -= coach.cost;
-        team.staff[coach.role.toLowerCase()] = coach;
+      const round = [1, 2, 3].find((r) => (team.draftPicks[r] || 0) > 0);
+      if (round) {
+        team.draftPicks[round] -= 1;
+        const value = Economy.draftPickSellValue(round);
+        team.cc += value;
         State.save(); UI.renderFrontOffice();
-        UI.toast(`HIRED ${coach.name}`);
+        UI.toast(`SOLD R${round} PICK FOR ${value} CC`);
+      } else {
+        UI.toast('NO DRAFT PICKS TO SELL');
       }
       return;
     }
 
-    // --- Front Office: free agents ---
+    // --- Free Agents marketplace ---
     const signBtn = target.closest('[data-sign-fa]');
     if (signBtn) {
       const s = State.get();
@@ -1213,29 +1406,61 @@ const Events = (() => {
         }
         team.roster.push(agent);
         s.market.freeAgents = s.market.freeAgents.filter((p) => p.id !== agent.id);
-        State.save(); UI.renderFrontOffice();
+        State.save(); UI.renderFreeAgents();
         UI.toast(`SIGNED ${agent.name}`);
       }
       return;
     }
-
-    // --- Front Office: draft picks ---
-    const sellBtn = target.closest('[data-sell-pick]');
-    if (sellBtn) {
-      const team = State.get().team;
-      const round = sellBtn.dataset.sellPick;
-      if ((team.draftPicks[round] || 0) > 0) {
-        team.draftPicks[round] -= 1;
-        team.cc += Economy.draftPickSellValue(round);
-        State.save(); UI.renderFrontOffice();
-        UI.toast(`SOLD R${round} PICK FOR ${Economy.draftPickSellValue(round)} CC`);
-      }
+    if (target.id === 'btn-refresh-fa') {
+      const s = State.get();
+      const team = s.team;
+      const cost = 5;
+      if (team.cc < cost) { UI.toast('NOT ENOUGH CC'); return; }
+      team.cc -= cost;
+      s.market.freeAgents = Data.generateFreeAgents(5);
+      State.save(); UI.renderFreeAgents();
+      UI.toast('FREE AGENT POOL REFRESHED');
       return;
     }
 
-    // --- Roster: open player detail ---
-    const rosterRow = target.closest('.roster-row');
-    if (rosterRow) { UI.openPlayerDetail(rosterRow.dataset.playerId); return; }
+    // --- Staff Hires marketplace ---
+    const hireBtn = target.closest('[data-hire-staff]');
+    if (hireBtn) {
+      const s = State.get();
+      const team = s.team;
+      const coach = s.market.staffPool.find((c) => c.id === hireBtn.dataset.hireStaff);
+      if (coach && team.cc >= coach.cost) {
+        team.cc -= coach.cost;
+        team.staff[coach.role.toLowerCase()] = coach;
+        State.save(); UI.renderStaffHires(); UI.renderFrontOffice();
+        UI.toast(`HIRED ${coach.name}`);
+      }
+      return;
+    }
+    if (target.id === 'btn-refresh-staff') {
+      const s = State.get();
+      const team = s.team;
+      const cost = 5;
+      if (team.cc < cost) { UI.toast('NOT ENOUGH CC'); return; }
+      team.cc -= cost;
+      s.market.staffPool = Data.generateStaffPool(4);
+      State.save(); UI.renderStaffHires();
+      UI.toast('STAFF POOL REFRESHED');
+      return;
+    }
+
+    // --- Roster ---
+    if (target.id === 'btn-roster-filter') { UI.toggleRosterFilter(); return; }
+    const playerCard = target.closest('.player-card[data-player-id]');
+    if (playerCard) { UI.openPlayerDetail(playerCard.dataset.playerId); return; }
+
+    // --- League & Standings tabs ---
+    const leagueTabBtn = target.closest('[data-league-tab]');
+    if (leagueTabBtn) { UI.setLeagueTab(leagueTabBtn.dataset.leagueTab); return; }
+
+    // --- Hall of Fame tabs ---
+    const hofTabBtn = target.closest('[data-hof-tab]');
+    if (hofTabBtn) { UI.setHofTab(hofTabBtn.dataset.hofTab); return; }
 
     // --- Pregame: lineup quick-swap ---
     const lineupRow = target.closest('#lineup-quick .list-row');
@@ -1340,6 +1565,22 @@ const Events = (() => {
     const { won, ccAwarded } = GameFlow.finalizeGame(result.homeScore, result.awayScore);
     UI.toast(`FINAL: ${result.homeScore}-${result.awayScore} (${won ? 'W' : 'L'}) · +${ccAwarded} CC`);
     State.showView('view-main-menu');
+  }
+
+  // Exhibition games are off-the-books: simulated against a random opponent,
+  // no effect on the season schedule, standings, or CC — just for fun/practice.
+  function doExhibitionGame() {
+    const s = State.get();
+    const team = s.team;
+    const opp = Data.pick(Data.OPPONENTS);
+    const diffMod = Config.DIFFICULTY_MODS[s.settings.difficulty] || 1;
+    const result = Sim.simulateGame(
+      Economy.teamOffenseRating(team), Economy.teamDefenseRating(team),
+      40 + Math.random() * 30, 40 + Math.random() * 30,
+      team.name, opp.name, s.settings.quarterLength, diffMod,
+    );
+    const won = result.homeScore > result.awayScore;
+    UI.toast(`EXHIBITION FINAL vs ${opp.abbr}: ${result.homeScore}-${result.awayScore} (${won ? 'W' : 'L'})`);
   }
 
   return { bind };

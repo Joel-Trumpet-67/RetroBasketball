@@ -277,6 +277,13 @@ html, body {
 }
 .standings-name { text-align: left; }
 .standings-row.is-self { color: var(--color-banner); }
+.standings-tier-label {
+  font-size: 8px;
+  color: var(--color-banner);
+  letter-spacing: 1px;
+  margin: 6px 0 2px;
+  padding-left: 2px;
+}
 
 .metrics-panel {
   display: flex;
@@ -377,7 +384,7 @@ html, body {
 .nav-hub {
   flex: 0 0 auto;
   display: grid;
-  grid-template-columns: 56px repeat(4, 1fr);
+  grid-template-columns: 56px repeat(5, 1fr);
   gap: 8px;
   padding: 10px 12px;
   background: var(--color-bg);
@@ -450,14 +457,6 @@ html, body {
   padding: 14px 16px 30px;
 }
 
-/* --- Settings --- */
-.setting-block { margin-bottom: 22px; }
-.setting-title {
-  font-size: 10px;
-  color: var(--color-dim);
-  letter-spacing: 1px;
-  margin-bottom: 8px;
-}
 .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .choice-btn {
   font-family: var(--font-pixel);
@@ -477,24 +476,6 @@ html, body {
   border-color: var(--color-shadow);
 }
 
-/* --- Front Office --- */
-.fo-summary {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 18px;
-}
-.fo-summary-card {
-  background: var(--color-panel-alt);
-  border: 3px solid var(--color-border);
-  border-radius: 10px;
-  box-shadow: 3px 3px 0 var(--color-shadow);
-  padding: 8px;
-  text-align: center;
-}
-.fo-summary-label { display: block; font-size: 9px; color: var(--color-dim); }
-.fo-summary-value { display: block; font-size: 14px; font-weight: bold; color: var(--color-banner); margin-top: 3px; }
-
 .fo-section { margin-bottom: 22px; }
 .fo-section-title {
   font-size: 11px;
@@ -506,28 +487,7 @@ html, body {
 }
 .fo-section-subtitle { font-size: 10px; color: var(--color-dim); margin: 10px 0 6px; }
 
-.upgrade-row {
-  display: grid;
-  grid-template-columns: 140px 1fr 130px;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  background: var(--color-panel-alt);
-  border: 3px solid var(--color-border);
-  border-radius: 10px;
-  box-shadow: 2px 2px 0 var(--color-shadow);
-  font-size: 10px;
-}
-.upgrade-bar {
-  height: 14px;
-  background: var(--color-shadow);
-  border: 2px solid var(--color-border);
-  border-radius: 6px;
-  overflow: hidden;
-}
-.upgrade-bar-fill { height: 100%; background: var(--color-good); }
-.upgrade-btn, .action-btn {
+.action-btn {
   font-family: var(--font-pixel);
   background: var(--color-banner);
   color: #1a1500;
@@ -539,8 +499,8 @@ html, body {
   font-weight: bold;
   cursor: pointer;
 }
-.upgrade-btn:active, .action-btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--color-shadow); }
-.upgrade-btn:disabled, .action-btn:disabled {
+.action-btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--color-shadow); }
+.action-btn:disabled {
   background: var(--color-panel-alt);
   color: var(--color-dim);
   border-color: var(--color-border);
@@ -549,12 +509,6 @@ html, body {
 }
 .action-btn { width: 100%; margin-top: 6px; padding: 10px; }
 
-.staff-current, .staff-list, .freeagent-list, .draft-list,
-.achievement-list, .records-list, .legends-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
 .list-row {
   display: flex;
   justify-content: space-between;
@@ -585,62 +539,224 @@ html, body {
 .mini-btn:disabled { background: var(--color-panel-alt); color: var(--color-dim); border-color: var(--color-border); cursor: not-allowed; }
 .mini-btn.danger { background: var(--color-red); color: #fff; border-color: var(--color-shadow); }
 
-/* --- Roster --- */
-.roster-summary {
-  display: flex;
-  justify-content: space-between;
+/* ============================================================
+   GENERIC "TITLED BOX" — same broken-border-with-centered-title
+   pattern as .standings-box/.fan-meter, under a separate name so
+   it can wrap arbitrary content (staff panel, HOF box, marketplace
+   columns) without dragging along standings/meter-specific markup.
+   ============================================================ */
+.titled-box {
+  position: relative;
+  border: 1px solid var(--color-border);
+  padding: 14px 10px 8px;
+  overflow-y: auto;
+  min-height: 0;
+}
+.titled-box-title {
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+.titled-box-title span {
+  background: var(--color-bg);
+  padding: 0 8px;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #fff;
+}
+
+/* --- Info badges (header-right "i" buttons) --- */
+.info-badge {
+  font-family: var(--font-pixel);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-panel-alt);
+  border: 2px solid var(--color-border);
+  color: #fff;
+  font-size: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.info-badge:hover { color: var(--color-banner); }
+.info-badge-inline { width: 14px; height: 14px; font-size: 8px; margin-left: 4px; vertical-align: middle; }
+.info-badge-mini { width: 16px; height: 16px; font-size: 8px; }
+
+/* --- Options (Settings) --- */
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.options-col { display: flex; flex-direction: column; gap: 14px; }
+.option-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   background: var(--color-panel-alt);
   border: 3px solid var(--color-border);
   border-radius: 10px;
-  box-shadow: 3px 3px 0 var(--color-shadow);
+  box-shadow: 2px 2px 0 var(--color-shadow);
   padding: 10px;
-  margin-bottom: 14px;
-  font-size: 11px;
 }
-.roster-group-title {
+.option-label { font-size: 9px; color: var(--color-dim); letter-spacing: 0.5px; display: flex; align-items: center; }
+.option-value-btn {
+  font-family: var(--font-pixel);
+  background: var(--color-banner);
+  color: #1a1500;
+  border: 3px solid var(--color-shadow);
+  border-radius: 8px;
+  box-shadow: 2px 2px 0 var(--color-shadow);
+  padding: 8px;
   font-size: 10px;
-  letter-spacing: 1px;
-  color: #fff;
-  text-shadow: 2px 2px 0 var(--color-shadow);
-  margin: 10px 0 8px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
 }
-.roster-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
-.roster-row {
+.option-value-btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--color-shadow); }
+.option-danger { background: var(--color-red); color: #fff; border-color: var(--color-shadow); }
+
+/* --- Shared sub-view footer bar (Options/FrontOffice/Roster/League/HOF/marketplaces) --- */
+.sub-footer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--color-bg);
+  border-top: 3px solid var(--color-border);
+}
+.sub-footer-left, .sub-footer-right { display: flex; align-items: center; gap: 8px; }
+.sub-footer-actions { flex: 1; display: flex; gap: 8px; }
+.sub-footer-actions .action-btn, .sub-footer-wide { margin-top: 0; }
+.sub-footer-wide { flex: 1; }
+.roster-sub-footer .sub-footer-right { flex: 1 1 auto; flex-direction: column; align-items: stretch; gap: 6px; }
+
+/* --- Front Office --- */
+.fo-columns {
+  flex: 1 1 auto;
   display: grid;
-  grid-template-columns: 26px 1fr 70px 60px;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 14px;
+  min-height: 0;
+}
+.fo-bars-col { display: flex; flex-direction: column; gap: 16px; min-height: 0; overflow-y: auto; padding-top: 6px; }
+.fo-bar-row { display: flex; align-items: center; gap: 8px; }
+.fo-bar { flex: 1 1 auto; }
+.cost-btn { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+
+.staff-panel { display: flex; flex-direction: column; }
+.staff-cards { display: flex; flex-direction: column; gap: 8px; }
+.staff-mini-card {
+  display: flex;
   align-items: center;
   gap: 8px;
   background: var(--color-panel-alt);
   border: 3px solid var(--color-border);
   border-radius: 10px;
   box-shadow: 2px 2px 0 var(--color-shadow);
-  padding: 8px 10px;
-  font-size: 10px;
-  cursor: pointer;
-  transition: transform 0.05s ease;
+  padding: 8px;
 }
-.roster-row:hover { border-color: var(--color-banner); }
-.roster-row:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--color-shadow); }
-.roster-pos { color: var(--color-dim); font-size: 9px; }
-.roster-name { font-weight: bold; }
-.roster-morale { text-align: center; font-size: 9px; }
-.roster-ovr { text-align: right; color: var(--color-banner); font-size: 9px; }
+.staff-mini-portrait { flex: 0 0 auto; width: 28px; height: 28px; }
+.staff-mini-info { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0; }
+.staff-mini-role { font-size: 8px; color: var(--color-dim); letter-spacing: 0.5px; }
+.staff-mini-name { font-size: 10px; font-weight: bold; }
 
-/* --- Hall of Fame --- */
-.hof-rings {
-  font-size: 16px;
-  font-weight: bold;
-  color: var(--color-banner);
-  text-align: center;
+.draft-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--color-bg);
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  padding: 4px 10px;
+  cursor: pointer;
+  gap: 1px;
+}
+.draft-badge:hover { border-color: var(--color-banner); }
+.draft-badge-title { font-size: 7px; color: var(--color-dim); letter-spacing: 0.5px; }
+.draft-badge-value { font-size: 12px; font-weight: bold; color: #fff; }
+
+/* --- Free Agents / Staff Hires marketplaces --- */
+.market-view-content { display: flex; }
+.market-layout {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 12px;
+  min-height: 0;
+}
+.market-current, .market-available { display: flex; flex-direction: column; }
+.market-current-list { display: flex; flex-direction: column; gap: 8px; }
+.market-grid { flex: 1 1 auto; }
+
+/* --- Card grid (Roster + marketplaces) --- */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  gap: 10px;
+  align-content: start;
+}
+.player-card {
   background: var(--color-panel-alt);
   border: 3px solid var(--color-border);
   border-radius: 10px;
-  box-shadow: 3px 3px 0 var(--color-shadow);
-  padding: 10px;
+  box-shadow: 2px 2px 0 var(--color-shadow);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  position: relative;
+  text-align: center;
+  transition: transform 0.05s ease;
 }
-.achievement-row.unlocked { border-color: var(--color-good); }
-.achievement-row.locked { opacity: 0.45; }
+.player-card:hover { border-color: var(--color-banner); }
+.player-card:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--color-shadow); }
+.player-card.is-starter { border-color: var(--color-banner); }
+.player-card-portrait { width: 40px; height: 40px; margin-bottom: 2px; }
+.player-card-pos { font-size: 8px; color: var(--color-dim); }
+.player-card-info { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.player-card-name { font-size: 9px; font-weight: bold; }
+.player-card-stars { font-size: 9px; color: #6fa8ff; }
+.player-card-condition { width: 100%; height: 6px; background: var(--color-shadow); border: 1px solid var(--color-border); border-radius: 4px; overflow: hidden; margin-top: 2px; }
+.player-card-condition-fill { height: 100%; background: var(--color-good); }
+.player-card-cost { font-size: 9px; color: var(--color-banner); }
+.player-card-morale-icon { position: absolute; top: 4px; right: 4px; font-size: 10px; }
+.player-card-action { width: 100%; margin-top: 4px; }
+
+/* --- Procedural pixel-face portraits (Roster/marketplace cards + staff mini-cards) --- */
+.pixel-face { width: 100%; height: 100%; border-radius: 50%; position: relative; overflow: hidden; border: 2px solid var(--color-shadow); }
+.pixel-face-hair { position: absolute; top: 0; left: 0; right: 0; height: 45%; border-radius: 50% 50% 0 0; }
+
+.view-subtitle {
+  flex: 0 0 auto;
+  text-align: center;
+  font-size: 9px;
+  color: var(--color-dim);
+  padding: 4px 0;
+  letter-spacing: 1px;
+}
+
+.cap-meter { flex: 1 1 auto; }
+
+/* --- League / Standings --- */
+.league-conf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: 100%; }
+.league-tabs { flex: 1 1 auto; display: flex; gap: 6px; overflow-x: auto; }
+.tab-btn { padding: 10px 6px; font-size: 8px; }
+.tab-btn.is-active { background: var(--color-banner); color: #1a1500; border-color: var(--color-shadow); }
+
+/* --- Hall of Fame --- */
+.hof-box { height: 100%; display: flex; flex-direction: column; }
+.hof-list { display: flex; flex-direction: column; gap: 8px; flex: 1 1 auto; }
+.hof-tabs { flex: 1 1 auto; display: flex; gap: 6px; overflow-x: auto; }
 
 /* --- Pregame --- */
 .matchup-box {

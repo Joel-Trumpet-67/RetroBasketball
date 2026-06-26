@@ -25,7 +25,7 @@
       <!-- HEADER 10% — CC badge / logo+stars / year badge -->
       <div class="menu-header">
         <div class="cc-badge">
-          <span class="cc-amount" id="header-cc">0</span><span class="cc-coin">C</span><span class="cc-c">C</span>
+          <span class="cc-amount cc-live" id="header-cc">0</span><span class="cc-coin">C</span><span class="cc-c">C</span>
         </div>
         <div class="menu-title">
           <span class="title-stars title-stars-left">
@@ -83,45 +83,70 @@
         <button class="nav-btn nav-btn-icon" data-route="view-settings" title="Settings">&#128295;</button>
         <button class="nav-btn" data-route="view-frontoffice">FRONT OFFICE</button>
         <button class="nav-btn" data-route="view-roster">ROSTER</button>
+        <button class="nav-btn" data-route="view-league">LEAGUE</button>
         <button class="nav-btn" data-route="view-hof">HALL OF FAME</button>
         <button class="nav-btn nav-btn-primary" data-route="view-pregame">CONTINUE</button>
       </nav>
     </section>
 
     <!-- ========================================================
-         SETTINGS VIEW
+         OPTIONS VIEW (formerly Settings)
          ======================================================== -->
     <section id="view-settings" class="view">
-      <header class="view-header">
-        <button class="back-btn" data-back="view-main-menu">&lt; BACK</button>
-        <h2>SETTINGS</h2>
-      </header>
+      <div class="menu-header">
+        <div class="cc-badge">
+          <span class="cc-amount cc-live">0</span><span class="cc-coin">C</span><span class="cc-c">C</span>
+        </div>
+        <div class="menu-title">
+          <span class="title-stars title-stars-left"><span class="ts ts-red">★</span><span class="ts ts-white">★</span><span class="ts ts-blue">★</span></span>
+          <span class="title-text">OPTIONS</span>
+          <span class="title-stars title-stars-right"><span class="ts ts-blue">★</span><span class="ts ts-white">★</span><span class="ts ts-red">★</span></span>
+        </div>
+        <div class="year-badge">V1.0.0.0</div>
+      </div>
+
       <div class="view-content">
-
-        <div class="setting-block">
-          <div class="setting-title">Quarter Length</div>
-          <div class="btn-row" id="quarter-length-row">
-            <button class="choice-btn" data-quarter="2">2 MIN</button>
-            <button class="choice-btn" data-quarter="3">3 MIN</button>
-            <button class="choice-btn" data-quarter="5">5 MIN</button>
+        <div class="options-grid">
+          <div class="options-col">
+            <div class="option-row">
+              <span class="option-label">RESET GAME</span>
+              <button class="option-value-btn option-danger" id="btn-exit-game">X</button>
+            </div>
+            <div class="option-row">
+              <span class="option-label">QUARTERS</span>
+              <button class="option-value-btn" data-cycle="quarterLength" id="opt-quarterLength">2 MIN</button>
+            </div>
+            <div class="option-row">
+              <span class="option-label">CAM ZOOM</span>
+              <button class="option-value-btn" data-cycle="camZoom" id="opt-camZoom">OFF</button>
+            </div>
+          </div>
+          <div class="options-col">
+            <div class="option-row">
+              <span class="option-label">DIFFICULTY <button class="info-badge info-badge-inline" data-info="difficulty">i</button></span>
+              <button class="option-value-btn" data-cycle="difficulty" id="opt-difficulty">MEDIUM</button>
+            </div>
+            <div class="option-row">
+              <span class="option-label">SOUND FX</span>
+              <button class="option-value-btn" data-cycle="soundFx" id="opt-soundFx">ON</button>
+            </div>
+          </div>
+          <div class="options-col">
+            <div class="option-row">
+              <span class="option-label">AUTOSAVE</span>
+              <button class="option-value-btn" data-cycle="autosave" id="opt-autosave">ON</button>
+            </div>
+            <div class="option-row">
+              <span class="option-label">UNIFORM</span>
+              <button class="option-value-btn" data-cycle="uniform" id="opt-uniform">HOME</button>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div class="setting-block">
-          <div class="setting-title">Difficulty</div>
-          <div class="btn-row" id="difficulty-row">
-            <button class="choice-btn" data-difficulty="easy">EASY</button>
-            <button class="choice-btn" data-difficulty="medium">MEDIUM</button>
-            <button class="choice-btn" data-difficulty="hard">HARD</button>
-            <button class="choice-btn" data-difficulty="extreme">EXTREME</button>
-          </div>
-        </div>
-
-        <div class="setting-block">
-          <div class="setting-title">Franchise</div>
-          <button class="danger-btn" id="btn-exit-game">EXIT GAME (RESET SAVE)</button>
-        </div>
-
+      <div class="sub-footer">
+        <button class="nav-btn nav-btn-icon" data-back="view-main-menu" title="Home">&#127968;</button>
+        <button class="action-btn sub-footer-wide" id="btn-exhibition">EXHIBITION GAME</button>
       </div>
     </section>
 
@@ -129,68 +154,139 @@
          FRONT OFFICE VIEW
          ======================================================== -->
     <section id="view-frontoffice" class="view">
-      <header class="view-header">
-        <button class="back-btn" data-back="view-main-menu">&lt; BACK</button>
-        <h2>FRONT OFFICE</h2>
-      </header>
+      <div class="menu-header">
+        <div class="cc-badge">
+          <span class="cc-amount cc-live">0</span><span class="cc-coin">C</span><span class="cc-c">C</span>
+        </div>
+        <div class="menu-title">
+          <span class="title-stars title-stars-left"><span class="ts ts-red">★</span><span class="ts ts-white">★</span><span class="ts ts-blue">★</span></span>
+          <span class="title-text">FRONT OFFICE</span>
+          <span class="title-stars title-stars-right"><span class="ts ts-blue">★</span><span class="ts ts-white">★</span><span class="ts ts-red">★</span></span>
+        </div>
+        <button class="info-badge" data-info="frontoffice">i</button>
+      </div>
+
       <div class="view-content">
+        <div class="fo-columns">
+          <div class="fo-bars-col">
+            <div class="fo-bar-row">
+              <div class="fan-meter fo-bar" id="bar-cap">
+                <div class="fan-meter-title"><span>SALARY CAP</span></div>
+                <div class="fan-meter-track"><div class="fan-meter-fill" id="bar-cap-fill"></div></div>
+              </div>
+            </div>
+            <div class="fo-bar-row">
+              <div class="fan-meter fo-bar" id="bar-stadium">
+                <div class="fan-meter-title"><span>STADIUM</span></div>
+                <div class="fan-meter-track"><div class="fan-meter-fill" id="bar-stadium-fill"></div></div>
+              </div>
+              <button class="mini-btn cost-btn" data-upgrade="stadium"><span class="cc-coin">C</span><span class="cost-amount" id="cost-stadium">0</span></button>
+            </div>
+            <div class="fo-bar-row">
+              <div class="fan-meter fo-bar" id="bar-facilities">
+                <div class="fan-meter-title"><span>TRAINING FACILITIES</span></div>
+                <div class="fan-meter-track"><div class="fan-meter-fill" id="bar-facilities-fill"></div></div>
+              </div>
+              <button class="mini-btn cost-btn" data-upgrade="facilities"><span class="cc-coin">C</span><span class="cost-amount" id="cost-facilities">0</span></button>
+            </div>
+            <div class="fo-bar-row">
+              <div class="fan-meter fo-bar" id="bar-rehab">
+                <div class="fan-meter-title"><span>REHAB FACILITIES</span></div>
+                <div class="fan-meter-track"><div class="fan-meter-fill" id="bar-rehab-fill"></div></div>
+              </div>
+              <button class="mini-btn cost-btn" data-upgrade="rehab"><span class="cc-coin">C</span><span class="cost-amount" id="cost-rehab">0</span></button>
+            </div>
+          </div>
 
-        <div class="fo-summary">
-          <div class="fo-summary-card">
-            <span class="fo-summary-label">COACHING CREDITS</span>
-            <span class="fo-summary-value" id="fo-cc">0 CC</span>
-          </div>
-          <div class="fo-summary-card">
-            <span class="fo-summary-label">SALARY CAP ROOM</span>
-            <span class="fo-summary-value" id="fo-cap">$0M / $0M</span>
-          </div>
-          <div class="fo-summary-card">
-            <span class="fo-summary-label">TEAM MORALE</span>
-            <span class="fo-summary-value" id="fo-morale">--%</span>
+          <div class="titled-box staff-panel">
+            <span class="titled-box-title"><span>STAFF</span></span>
+            <div class="staff-cards" id="staff-cards"><!-- injected HC/OF/DF mini cards --></div>
           </div>
         </div>
+      </div>
 
-        <div class="fo-section">
-          <div class="fo-section-title">UPGRADES</div>
-          <div class="upgrade-row" id="upgrade-stadium" data-upgrade="stadium">
-            <div class="upgrade-label">STADIUM <span class="upgrade-level"></span></div>
-            <div class="upgrade-bar"><div class="upgrade-bar-fill"></div></div>
-            <button class="upgrade-btn">UPGRADE <span class="upgrade-cost"></span></button>
+      <div class="sub-footer">
+        <button class="nav-btn nav-btn-icon" data-back="view-main-menu" title="Home">&#127968;</button>
+        <div class="sub-footer-actions">
+          <button class="action-btn" id="btn-increase-cap">INCREASE SALARY CAP</button>
+          <button class="action-btn" data-route="view-freeagents">FREE AGENTS</button>
+          <button class="action-btn" data-route="view-staffhires">STAFF HIRES</button>
+        </div>
+        <div class="draft-badge" id="draft-badge">
+          <span class="draft-badge-title">DRAFT PICKS</span>
+          <span class="draft-badge-value" id="draft-badge-value">1-1-1</span>
+          <button class="info-badge info-badge-mini" data-info="draft">i</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         FREE AGENTS VIEW (marketplace)
+         ======================================================== -->
+    <section id="view-freeagents" class="view">
+      <div class="menu-header">
+        <div class="cc-badge">
+          <span class="cc-amount cc-live">0</span><span class="cc-coin">C</span><span class="cc-c">C</span>
+        </div>
+        <div class="menu-title">
+          <span class="title-stars title-stars-left"><span class="ts ts-red">★</span><span class="ts ts-white">★</span><span class="ts ts-blue">★</span></span>
+          <span class="title-text">FREE AGENTS</span>
+          <span class="title-stars title-stars-right"><span class="ts ts-blue">★</span><span class="ts ts-white">★</span><span class="ts ts-red">★</span></span>
+        </div>
+        <button class="info-badge" data-info="freeagents">i</button>
+      </div>
+
+      <div class="view-content market-view-content">
+        <div class="market-layout">
+          <div class="titled-box market-current">
+            <span class="titled-box-title"><span>CURRENT ROSTER</span></span>
+            <div class="market-current-list" id="fa-current-list"><!-- injected --></div>
           </div>
-          <div class="upgrade-row" id="upgrade-facilities" data-upgrade="facilities">
-            <div class="upgrade-label">FACILITIES <span class="upgrade-level"></span></div>
-            <div class="upgrade-bar"><div class="upgrade-bar-fill"></div></div>
-            <button class="upgrade-btn">UPGRADE <span class="upgrade-cost"></span></button>
-          </div>
-          <div class="upgrade-row" id="upgrade-rehab" data-upgrade="rehab">
-            <div class="upgrade-label">REHAB <span class="upgrade-level"></span></div>
-            <div class="upgrade-bar"><div class="upgrade-bar-fill"></div></div>
-            <button class="upgrade-btn">UPGRADE <span class="upgrade-cost"></span></button>
+          <div class="titled-box market-available">
+            <span class="titled-box-title"><span>AVAILABLE</span></span>
+            <div class="card-grid market-grid" id="fa-available-grid"><!-- injected --></div>
           </div>
         </div>
+      </div>
 
-        <div class="fo-section">
-          <div class="fo-section-title">SALARY CAP</div>
-          <button class="action-btn" id="btn-increase-cap">INCREASE CAP — 100 CC (+$25M)</button>
+      <div class="sub-footer">
+        <button class="nav-btn nav-btn-icon" data-back="view-frontoffice" title="Back">&#8592;</button>
+        <button class="action-btn sub-footer-wide" id="btn-refresh-fa">REFRESH — 5 CC</button>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         STAFF HIRES VIEW (marketplace)
+         ======================================================== -->
+    <section id="view-staffhires" class="view">
+      <div class="menu-header">
+        <div class="cc-badge">
+          <span class="cc-amount cc-live">0</span><span class="cc-coin">C</span><span class="cc-c">C</span>
         </div>
-
-        <div class="fo-section">
-          <div class="fo-section-title">STAFF</div>
-          <div class="staff-current" id="staff-current"><!-- injected --></div>
-          <div class="fo-section-subtitle">AVAILABLE HIRES</div>
-          <div class="staff-list" id="staff-list"><!-- injected --></div>
+        <div class="menu-title">
+          <span class="title-stars title-stars-left"><span class="ts ts-red">★</span><span class="ts ts-white">★</span><span class="ts ts-blue">★</span></span>
+          <span class="title-text">STAFF HIRES</span>
+          <span class="title-stars title-stars-right"><span class="ts ts-blue">★</span><span class="ts ts-white">★</span><span class="ts ts-red">★</span></span>
         </div>
+        <button class="info-badge" data-info="staffhires">i</button>
+      </div>
 
-        <div class="fo-section">
-          <div class="fo-section-title">FREE AGENTS</div>
-          <div class="freeagent-list" id="freeagent-list"><!-- injected --></div>
+      <div class="view-content market-view-content">
+        <div class="market-layout">
+          <div class="titled-box market-current">
+            <span class="titled-box-title"><span>CURRENT STAFF</span></span>
+            <div class="market-current-list" id="staff-current-list"><!-- injected --></div>
+          </div>
+          <div class="titled-box market-available">
+            <span class="titled-box-title"><span>AVAILABLE HIRES</span></span>
+            <div class="card-grid market-grid" id="staff-available-grid"><!-- injected --></div>
+          </div>
         </div>
+      </div>
 
-        <div class="fo-section">
-          <div class="fo-section-title">DRAFT PICKS</div>
-          <div class="draft-list" id="draft-list"><!-- injected --></div>
-        </div>
-
+      <div class="sub-footer">
+        <button class="nav-btn nav-btn-icon" data-back="view-frontoffice" title="Back">&#8592;</button>
+        <button class="action-btn sub-footer-wide" id="btn-refresh-staff">REFRESH HIRES — 5 CC</button>
       </div>
     </section>
 
@@ -198,24 +294,78 @@
          ROSTER VIEW
          ======================================================== -->
     <section id="view-roster" class="view">
-      <header class="view-header">
-        <button class="back-btn" data-back="view-main-menu">&lt; BACK</button>
-        <h2>ROSTER</h2>
-      </header>
-      <div class="view-content">
-
-        <div class="roster-summary">
-          <span class="status-value stars" id="roster-off-stars">★★★☆☆</span>
-          <span class="status-value stars" id="roster-def-stars">★★★☆☆</span>
-          <span class="fo-summary-value" id="roster-cap">$0M / $0M</span>
+      <div class="menu-header">
+        <div class="cc-badge">
+          <span class="cc-amount cc-live">0</span><span class="cc-coin">C</span><span class="cc-c">C</span>
         </div>
+        <div class="menu-title">
+          <span class="title-stars title-stars-left"><span class="ts ts-red">★</span><span class="ts ts-white">★</span><span class="ts ts-blue">★</span></span>
+          <span class="title-text">ROSTER</span>
+          <span class="title-stars title-stars-right"><span class="ts ts-blue">★</span><span class="ts ts-white">★</span><span class="ts ts-red">★</span></span>
+        </div>
+        <button class="info-badge" data-info="roster">i</button>
+      </div>
+      <div class="view-subtitle" id="roster-subtitle">PLAYERS 0/0</div>
 
-        <div class="roster-group-title">STARTERS</div>
-        <div class="roster-list" id="roster-starters"><!-- injected --></div>
+      <div class="view-content">
+        <div class="card-grid" id="roster-cards"><!-- injected player cards --></div>
+      </div>
 
-        <div class="roster-group-title">BENCH</div>
-        <div class="roster-list" id="roster-bench"><!-- injected --></div>
+      <div class="sub-footer roster-sub-footer">
+        <div class="sub-footer-left">
+          <button class="nav-btn nav-btn-icon" id="btn-roster-filter" title="Starters Only">&#127936;</button>
+          <button class="nav-btn nav-btn-icon" data-back="view-main-menu" title="Home">&#127968;</button>
+        </div>
+        <div class="sub-footer-right">
+          <div class="fan-meter cap-meter">
+            <div class="fan-meter-title"><span id="roster-cap-title">SALARY CAP</span></div>
+            <div class="fan-meter-track"><div class="fan-meter-fill" id="roster-cap-fill"></div></div>
+          </div>
+          <div class="status-row">
+            <div class="status-box">
+              <div class="status-box-title">MORALE</div>
+              <div class="status-box-value"><span class="emoji-icon">&#128578;</span><span id="roster-stat-morale">--%</span></div>
+            </div>
+            <div class="status-box">
+              <div class="status-box-title">OFFENSE</div>
+              <div class="status-box-value stars" id="roster-off-stars">★★★☆☆</div>
+            </div>
+            <div class="status-box">
+              <div class="status-box-title">DEFENSE</div>
+              <div class="status-box-value" id="roster-def-icon">▲</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
+    <!-- ========================================================
+         LEAGUE / STANDINGS VIEW
+         ======================================================== -->
+    <section id="view-league" class="view">
+      <div class="menu-header">
+        <div class="cc-badge">
+          <span class="cc-amount cc-live">0</span><span class="cc-coin">C</span><span class="cc-c">C</span>
+        </div>
+        <div class="menu-title">
+          <span class="title-stars title-stars-left"><span class="ts ts-red">★</span><span class="ts ts-white">★</span><span class="ts ts-blue">★</span></span>
+          <span class="title-text">LEAGUE</span>
+          <span class="title-stars title-stars-right"><span class="ts ts-blue">★</span><span class="ts ts-white">★</span><span class="ts ts-red">★</span></span>
+        </div>
+        <button class="info-badge" data-info="league">i</button>
+      </div>
+
+      <div class="view-content" id="league-content"><!-- injected by tab --></div>
+
+      <div class="sub-footer league-footer">
+        <button class="nav-btn nav-btn-icon" data-back="view-main-menu" title="Home">&#127968;</button>
+        <div class="league-tabs" id="league-tabs">
+          <button class="nav-btn tab-btn" data-league-tab="view">VIEW</button>
+          <button class="nav-btn tab-btn" data-league-tab="confA">CONF A</button>
+          <button class="nav-btn tab-btn" data-league-tab="confN">CONF N</button>
+          <button class="nav-btn tab-btn" data-league-tab="schedule">SCHEDULE</button>
+          <button class="nav-btn tab-btn" data-league-tab="playoffs">PLAYOFFS</button>
+        </div>
       </div>
     </section>
 
@@ -223,32 +373,33 @@
          HALL OF FAME VIEW
          ======================================================== -->
     <section id="view-hof" class="view">
-      <header class="view-header">
-        <button class="back-btn" data-back="view-main-menu">&lt; BACK</button>
-        <h2>HALL OF FAME</h2>
-      </header>
+      <div class="menu-header">
+        <div class="cc-badge">
+          <span class="cc-amount cc-live">0</span><span class="cc-coin">C</span><span class="cc-c">C</span>
+        </div>
+        <div class="menu-title">
+          <span class="title-stars title-stars-left"><span class="ts ts-red">★</span><span class="ts ts-white">★</span><span class="ts ts-blue">★</span></span>
+          <span class="title-text">HALL OF FAME</span>
+          <span class="title-stars title-stars-right"><span class="ts ts-blue">★</span><span class="ts ts-white">★</span><span class="ts ts-red">★</span></span>
+        </div>
+        <button class="info-badge" data-info="hof">i</button>
+      </div>
+
       <div class="view-content">
-
-        <div class="fo-section">
-          <div class="fo-section-title">CHAMPIONSHIPS</div>
-          <div class="hof-rings" id="hof-rings">0 FINALS WON</div>
+        <div class="titled-box hof-box">
+          <span class="titled-box-title"><span id="hof-box-title">— ACHIEVEMENTS 0% —</span></span>
+          <div class="hof-list" id="hof-list"><!-- injected by tab --></div>
         </div>
+      </div>
 
-        <div class="fo-section">
-          <div class="fo-section-title">ACHIEVEMENTS</div>
-          <div class="achievement-list" id="achievement-list"><!-- injected --></div>
+      <div class="sub-footer hof-footer">
+        <button class="nav-btn nav-btn-icon" data-back="view-main-menu" title="Home">&#127968;</button>
+        <div class="hof-tabs" id="hof-tabs">
+          <button class="nav-btn tab-btn" data-hof-tab="achievements">ACHIEVEMENTS</button>
+          <button class="nav-btn tab-btn" data-hof-tab="championships">&#127942; CHAMPIONSHIPS</button>
+          <button class="nav-btn tab-btn" data-hof-tab="records">PLAYER RECORDS</button>
+          <button class="nav-btn tab-btn" data-hof-tab="legends">&#127895; PLAYER HOF</button>
         </div>
-
-        <div class="fo-section">
-          <div class="fo-section-title">ALL-TIME PLAYER RECORDS</div>
-          <div class="records-list" id="records-list"><!-- injected --></div>
-        </div>
-
-        <div class="fo-section">
-          <div class="fo-section-title">RETIRED LEGENDS (PLAYER HOF)</div>
-          <div class="legends-list" id="legends-list"><!-- injected --></div>
-        </div>
-
       </div>
     </section>
 
