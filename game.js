@@ -816,7 +816,9 @@ const UI = (() => {
       pill.className = 'week-pill';
       if (idx === s.season.weekIndex) pill.classList.add('is-current');
       if (g.played) pill.classList.add('is-played');
+      const dotClass = idx === s.season.weekIndex ? 'dot-current' : !g.played ? 'dot-future' : g.result === 'W' ? 'dot-win' : 'dot-loss';
       pill.innerHTML = `
+        <span class="wk-dot ${dotClass}"></span>
         <span class="wk-num">${g.isFinals ? 'FINALS' : 'W' + g.week}</span>
         <span class="wk-opp">${g.home ? 'vs' : '@'} ${g.oppAbbr}</span>
         ${g.played ? `<span class="wk-result">${g.result} ${g.homeScore}-${g.awayScore}</span>` : ''}
@@ -1078,6 +1080,18 @@ const UI = (() => {
 
   function clearGameLog() { $('game-log').innerHTML = ''; }
 
+  function updatePlayerCallout(entity) {
+    const card = $('game-stat-callout');
+    if (!entity || !entity.player) { card.classList.remove('active'); return; }
+    const p = entity.player;
+    $('gsc-name').textContent = p.name.toUpperCase();
+    $('gsc-pos').textContent = p.pos;
+    $('gsc-pts').textContent = p.stats.points;
+    $('gsc-reb').textContent = p.stats.rebounds;
+    $('gsc-ast').textContent = p.stats.assists;
+    card.classList.add('active');
+  }
+
   /* ---------------- ROUTER HOOK ---------------- */
   function onShowView(viewId) {
     switch (viewId) {
@@ -1096,7 +1110,7 @@ const UI = (() => {
   return {
     toast, renderMainMenu, renderSettings, renderFrontOffice, renderRoster,
     openPlayerDetail, closePlayerDetail, getSelectedPlayerId,
-    renderHOF, renderPregame, updateGameHUD, pushGameLog, clearGameLog,
+    renderHOF, renderPregame, updateGameHUD, pushGameLog, clearGameLog, updatePlayerCallout,
     onShowView, renderActiveSubview, fmtMoney, fmtPercent,
   };
 })();
@@ -1333,6 +1347,7 @@ const Events = (() => {
    ================================================================ */
 const CourtEngine = (() => {
   let canvas, ctx;
+  let bgCanvas, bgCtx; // offscreen cache for the static arena (crowd/floor/hoops) — re-rendered only on resize
   let W = 960, H = 540;
   let raf = null;
   let lastTs = 0;
@@ -1345,6 +1360,8 @@ const CourtEngine = (() => {
   function init() {
     canvas = document.getElementById('gameCanvas');
     ctx = canvas.getContext('2d');
+    bgCanvas = document.createElement('canvas');
+    bgCtx = bgCanvas.getContext('2d');
     resize();
     window.addEventListener('resize', resize);
   }
@@ -1353,9 +1370,14 @@ const CourtEngine = (() => {
     const rect = canvas.getBoundingClientRect();
     W = canvas.width = Math.max(640, Math.floor(rect.width));
     H = canvas.height = Math.max(360, Math.floor(rect.height));
+    bgCanvas.width = W;
+    bgCanvas.height = H;
+    renderArenaBackground();
   }
 
-  // Formation spots (fractions of court W/H) for each role, mirrored for offense/defense ends.
+  // Formation spots: x = lateral spread (across court width H), y = depth from own
+  // basket (0 = frontcourt/at the rim, 1 = backcourt/deep). Home attacks the right
+  // hoop, away attacks the left hoop — see makeSquad's depth mapping below.
   const FORMATION = {
     PG: { x: 0.5, y: 0.78 }, SG: { x: 0.22, y: 0.65 }, SF: { x: 0.78, y: 0.65 },
     PF: { x: 0.32, y: 0.42 }, C: { x: 0.68, y: 0.42 },
@@ -1366,14 +1388,16 @@ const CourtEngine = (() => {
     return Data.POSITIONS.map((pos, i) => {
       const base = FORMATION[pos];
       const player = starters ? starters.find((p) => p.pos === pos) || starters[i] : null;
+      const depthX = isHome ? (1 - base.y) * W : base.y * W;
+      const lateralY = base.x * H;
       return {
         pos,
         player,
         isHome,
-        x: base.x * W,
-        y: isHome ? base.y * H : (1 - base.y) * H,
-        targetX: base.x * W,
-        targetY: isHome ? base.y * H : (1 - base.y) * H,
+        x: depthX,
+        y: lateralY,
+        targetX: depthX,
+        targetY: lateralY,
         color: isHome ? '#2f6fed' : '#ff5f4d',
       };
     });
@@ -1405,6 +1429,7 @@ const CourtEngine = (() => {
 
     UI.clearGameLog();
     UI.pushGameLog('Tip-off!');
+    UI.updatePlayerCallout(runtime.ballHandler);
     State.showView('view-game');
     resize();
     lastTs = performance.now();
@@ -1491,14 +1516,14 @@ const CourtEngine = (() => {
   // Smoothly drift non-controlled players toward formation spots, offense/defense mirrored by possession.
   function moveFormations(dt) {
     const speed = 90 * dt;
-    [...runtime.homeSquad, ...runtime.awaySquad].forEach((entity, idx) => {
+    [...runtime.homeSquad, ...runtime.awaySquad].forEach((entity) => {
       const isControlled = runtime.possession === 'home' && entity.isHome && entity === runtime.ballHandler;
       if (isControlled) return;
       const base = FORMATION[entity.pos];
       const onOffense = (entity.isHome && runtime.possession === 'home') || (!entity.isHome && runtime.possession === 'away');
-      const yFrac = onOffense ? base.y : 1 - base.y * 0.6;
-      const tx = base.x * W;
-      const ty = entity.isHome ? yFrac * H : (1 - yFrac) * H;
+      const depthFrac = onOffense ? base.y : 1 - base.y * 0.6;
+      const tx = entity.isHome ? (1 - depthFrac) * W : depthFrac * W;
+      const ty = base.x * H;
       entity.x += (tx - entity.x) * Math.min(1, speed / 40);
       entity.y += (ty - entity.y) * Math.min(1, speed / 40);
     });
@@ -1533,14 +1558,16 @@ const CourtEngine = (() => {
     if (best) {
       runtime.ballHandler = best;
       UI.pushGameLog(`Pass to ${best.player ? best.player.name : best.pos}.`);
+      UI.updatePlayerCallout(best);
     }
   }
 
   function openShotMeter() {
     if (runtime.phase !== 'USER_OFFENSE') return;
     const handler = runtime.ballHandler;
-    const threePtLineY = handler.isHome ? H * 0.45 : H * 0.55; // rough arc threshold
-    runtime.shotMeter.isThree = handler.isHome ? handler.y < threePtLineY : handler.y > threePtLineY;
+    // Home attacks the right hoop (high x), away attacks the left hoop (low x).
+    const threePtLineX = handler.isHome ? W * 0.55 : W * 0.45; // rough arc threshold
+    runtime.shotMeter.isThree = handler.isHome ? handler.x > threePtLineX : handler.x < threePtLineX;
     runtime.shotMeter.needlePos = 0;
     runtime.shotMeter.dir = 1;
     setPhase('SHOT_METER');
@@ -1592,6 +1619,7 @@ const CourtEngine = (() => {
   function switchPossession() {
     runtime.possession = runtime.possession === 'home' ? 'away' : 'home';
     runtime.ballHandler = runtime.possession === 'home' ? runtime.homeSquad[0] : runtime.awaySquad[0];
+    UI.updatePlayerCallout(runtime.ballHandler);
   }
 
   // AI possessions (opponent has the ball) auto-resolve via the shared text-sim engine.
@@ -1653,69 +1681,235 @@ const CourtEngine = (() => {
     setTimeout(() => State.showView('view-main-menu'), 1600);
   }
 
-  /* ---- Draw ---- */
+  /* ---- Draw ----
+     The arena (crowd, wood floor, paint, hoops) never changes shape between
+     frames, so it's rendered once into bgCanvas (on init/resize) and just
+     blitted here. Only players/ball/labels are redrawn every frame. */
   function draw() {
     if (!ctx) return;
     ctx.clearRect(0, 0, W, H);
-    drawCourt();
+    ctx.drawImage(bgCanvas, 0, 0);
+    if (!runtime) return;
     drawSquad(runtime.awaySquad);
     drawSquad(runtime.homeSquad);
     drawBall();
+    drawActionLabels();
   }
 
-  function drawCourt() {
-    ctx.fillStyle = '#c08a4e';
-    ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = '#f4e3c1';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(COURT_MARGIN, COURT_MARGIN, W - COURT_MARGIN * 2, H - COURT_MARGIN * 2);
-    ctx.beginPath();
-    ctx.moveTo(COURT_MARGIN, H / 2);
-    ctx.lineTo(W - COURT_MARGIN, H / 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(W / 2, H / 2, 40, 0, Math.PI * 2);
-    ctx.stroke();
-    // Paint + arcs + hoops, both ends
-    [0, 1].forEach((end) => {
-      const hoopY = end === 0 ? COURT_MARGIN : H - COURT_MARGIN;
-      const dir = end === 0 ? 1 : -1;
-      ctx.strokeRect(W / 2 - 70, end === 0 ? COURT_MARGIN : H - COURT_MARGIN - 110, 140, 110);
-      ctx.beginPath();
-      ctx.arc(W / 2, hoopY, 110, end === 0 ? 0 : Math.PI, end === 0 ? Math.PI : Math.PI * 2);
-      ctx.stroke();
-      ctx.fillStyle = '#ff5f4d';
-      ctx.beginPath();
-      ctx.arc(W / 2, hoopY + dir * 14, 6, 0, Math.PI * 2);
-      ctx.fill();
-    });
+  function renderArenaBackground() {
+    if (!bgCtx) return;
+    const g = bgCtx;
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = '#181024';
+    g.fillRect(0, 0, W, H);
+    drawCrowdDots(g);
+
+    const fx = COURT_MARGIN, fy = COURT_MARGIN, fw = W - COURT_MARGIN * 2, fh = H - COURT_MARGIN * 2;
+    drawFloor(g, fx, fy, fw, fh);
+    drawCenterLogo(g, fx, fy, fw, fh);
+
+    g.strokeStyle = '#f4e3c1';
+    g.lineWidth = 3;
+    g.beginPath();
+    g.moveTo(W / 2, fy);
+    g.lineTo(W / 2, fy + fh);
+    g.stroke();
+    g.beginPath();
+    g.arc(W / 2, H / 2, 40, 0, Math.PI * 2);
+    g.stroke();
+    g.strokeRect(fx, fy, fw, fh);
+
+    [0, 1].forEach((end) => drawHoopEnd(g, end));
+  }
+
+  // Deterministic pseudo-random crowd dot pattern — same seed every render, so it
+  // doesn't shimmer/flicker when re-rendered (e.g. on resize).
+  function drawCrowdDots(g) {
+    const colors = ['#ff5f4d', '#ffcc33', '#2f6fed', '#5fd97a', '#c95fff', '#f4e3c1'];
+    let seed = 7;
+    const rand = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    const gap = 7, size = 4;
+    for (let y = 2; y < H; y += gap) {
+      for (let x = 2; x < W; x += gap) {
+        if (rand() < 0.5) {
+          g.fillStyle = colors[Math.floor(rand() * colors.length)];
+          g.fillRect(x, y, size, size);
+        }
+      }
+    }
+  }
+
+  function drawFloor(g, fx, fy, fw, fh) {
+    g.fillStyle = '#c89a5c';
+    g.fillRect(fx, fy, fw, fh);
+    const plank = 18;
+    let row = 0;
+    for (let y = fy; y < fy + fh; y += plank) {
+      const h = Math.min(plank, fy + fh - y);
+      if (row % 2 === 1) {
+        g.fillStyle = 'rgba(150,105,55,0.28)';
+        g.fillRect(fx, y, fw, h);
+      }
+      g.strokeStyle = 'rgba(90,58,20,0.45)';
+      g.lineWidth = 1;
+      g.beginPath();
+      g.moveTo(fx, y);
+      g.lineTo(fx + fw, y);
+      g.stroke();
+      row++;
+    }
+  }
+
+  function drawCenterLogo(g, fx, fy, fw, fh) {
+    g.save();
+    g.globalAlpha = 0.25;
+    g.fillStyle = '#2f6fed';
+    g.beginPath();
+    g.arc(fx + fw / 2, fy + fh / 2, 58, 0, Math.PI * 2);
+    g.fill();
+    g.globalAlpha = 0.55;
+    g.fillStyle = '#f4e3c1';
+    g.font = 'bold 36px monospace';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText('RH', fx + fw / 2, fy + fh / 2 + 2);
+    g.restore();
+  }
+
+  // end 0 = left hoop (away attacks this one), end 1 = right hoop (home attacks this one).
+  function drawHoopEnd(g, end) {
+    const hoopX = end === 0 ? COURT_MARGIN : W - COURT_MARGIN;
+    const dir = end === 0 ? 1 : -1; // points from the hoop into the court
+    const paintW = 110, paintH = 140;
+    const paintX = end === 0 ? COURT_MARGIN : W - COURT_MARGIN - paintW;
+    const paintY = H / 2 - paintH / 2;
+
+    g.fillStyle = 'rgba(120,70,200,0.3)';
+    g.fillRect(paintX, paintY, paintW, paintH);
+    g.strokeStyle = '#f4e3c1';
+    g.lineWidth = 3;
+    g.strokeRect(paintX, paintY, paintW, paintH);
+
+    g.beginPath();
+    g.arc(hoopX, H / 2, 110, end === 0 ? -Math.PI / 2 : Math.PI / 2, end === 0 ? Math.PI / 2 : Math.PI * 1.5);
+    g.stroke();
+
+    const backboardX = end === 0 ? COURT_MARGIN - 8 : W - COURT_MARGIN + 8;
+    g.fillStyle = '#e8e8e8';
+    g.fillRect(backboardX - 3, H / 2 - 26, 6, 52);
+    g.strokeStyle = '#333';
+    g.lineWidth = 1;
+    g.strokeRect(backboardX - 3, H / 2 - 26, 6, 52);
+
+    const rimX = hoopX + dir * 14;
+    g.fillStyle = '#ff5f4d';
+    g.beginPath();
+    g.arc(rimX, H / 2, 7, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = 'rgba(255,95,77,0.6)';
+    g.lineWidth = 1.5;
+    for (let i = -2; i <= 2; i++) {
+      g.beginPath();
+      g.moveTo(rimX, H / 2 + i * 5);
+      g.lineTo(rimX + dir * 12, H / 2 + i * 3);
+      g.stroke();
+    }
   }
 
   function drawSquad(squad) {
-    squad.forEach((entity) => {
+    squad.forEach((entity) => drawPlayerSprite(entity));
+  }
+
+  // Chunky multi-block sprite (shadow + shorts + jersey + head) instead of a
+  // flat circle, plus a highlight ring on whoever currently has the ball.
+  function drawPlayerSprite(entity) {
+    const { x, y, color } = entity;
+    const isBall = entity === runtime.ballHandler;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + 14, 10, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = shadeColor(color, -40);
+    ctx.fillRect(x - 6, y + 2, 12, 8);
+
+    ctx.fillStyle = color;
+    ctx.fillRect(x - 8, y - 9, 16, 11);
+
+    ctx.fillStyle = '#e3ab7a';
+    ctx.beginPath();
+    ctx.arc(x, y - 14, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (isBall) {
+      ctx.strokeStyle = '#ffcc33';
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(entity.x, entity.y, 14, 0, Math.PI * 2);
-      ctx.fillStyle = entity.color;
-      ctx.fill();
-      if (entity === runtime.ballHandler) {
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = '#ffcc33';
-        ctx.stroke();
-      }
-      ctx.fillStyle = '#fff';
-      ctx.font = '10px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(entity.pos, entity.x, entity.y + 3);
-    });
+      ctx.arc(x, y, 19, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(entity.pos, x, y - 2);
+  }
+
+  function shadeColor(hex, amt) {
+    const num = parseInt(hex.slice(1), 16);
+    let r = (num >> 16) + amt, gC = ((num >> 8) & 0xff) + amt, b = (num & 0xff) + amt;
+    r = Math.max(0, Math.min(255, r)); gC = Math.max(0, Math.min(255, gC)); b = Math.max(0, Math.min(255, b));
+    return `rgb(${r},${gC},${b})`;
   }
 
   function drawBall() {
     const handler = runtime.ballHandler;
     if (!handler) return;
+    const bob = Math.sin(performance.now() / 150) * 2;
     ctx.beginPath();
-    ctx.arc(handler.x + 16, handler.y - 16, 5, 0, Math.PI * 2);
-    ctx.fillStyle = '#ffcc33';
+    ctx.arc(handler.x + 14, handler.y - 6 + bob, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#e8772e';
     ctx.fill();
+    ctx.strokeStyle = '#8a3d10';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Hoop Land-style floating contextual labels: "STEAL" when a defender is
+  // crowding the ball handler, "OPEN" for an unguarded teammate.
+  function drawActionLabels() {
+    if (runtime.phase !== 'USER_OFFENSE') return;
+    const handler = runtime.ballHandler;
+    if (!handler) return;
+    const defenders = handler.isHome ? runtime.awaySquad : runtime.homeSquad;
+    let nearestDef = null, nearestDefDist = Infinity;
+    defenders.forEach((d) => {
+      const dist = Math.hypot(d.x - handler.x, d.y - handler.y);
+      if (dist < nearestDefDist) { nearestDefDist = dist; nearestDef = d; }
+    });
+    if (nearestDef && nearestDefDist < 55) {
+      drawFloatingLabel(nearestDef.x, nearestDef.y - 28, 'STEAL!', '#ff5f4d');
+    }
+
+    const teammates = handler.isHome ? runtime.homeSquad : runtime.awaySquad;
+    teammates.forEach((t) => {
+      if (t === handler) return;
+      const closestDef = defenders.reduce((best, d) => Math.min(best, Math.hypot(d.x - t.x, d.y - t.y)), Infinity);
+      if (closestDef > 90) drawFloatingLabel(t.x, t.y - 28, 'OPEN', '#45d483');
+    });
+  }
+
+  function drawFloatingLabel(x, y, text, color) {
+    ctx.save();
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'center';
+    const w = ctx.measureText(text).width + 10;
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(x - w / 2, y - 12, w, 16);
+    ctx.fillStyle = color;
+    ctx.fillText(text, x, y);
+    ctx.restore();
   }
 
   return { init, start, exitToMenu, quickSimQuarter, passToNearestTeammate, openShotMeter, lockShotMeter, getRuntime: () => runtime, setKey: (k, v) => { if (runtime) runtime.keys[k] = v; } };
