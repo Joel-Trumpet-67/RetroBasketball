@@ -816,7 +816,9 @@ const UI = (() => {
       pill.className = 'week-pill';
       if (idx === s.season.weekIndex) pill.classList.add('is-current');
       if (g.played) pill.classList.add('is-played');
+      const dotClass = idx === s.season.weekIndex ? 'dot-current' : !g.played ? 'dot-future' : g.result === 'W' ? 'dot-win' : 'dot-loss';
       pill.innerHTML = `
+        <span class="wk-dot ${dotClass}"></span>
         <span class="wk-num">${g.isFinals ? 'FINALS' : 'W' + g.week}</span>
         <span class="wk-opp">${g.home ? 'vs' : '@'} ${g.oppAbbr}</span>
         ${g.played ? `<span class="wk-result">${g.result} ${g.homeScore}-${g.awayScore}</span>` : ''}
