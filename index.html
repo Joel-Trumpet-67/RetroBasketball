@@ -8,21 +8,12 @@
 </head>
 <body>
 
-<!-- ============================================================
-     APP ROOT — fixed 16:9 responsive stage. Everything lives here.
-     ============================================================ -->
 <div id="app-container">
   <div id="screen">
 
-    <!-- TOAST / MESSAGE LOG (non-blocking notifications) -->
     <div id="toast" class="toast"></div>
 
-    <!-- ========================================================
-         MAIN MENU VIEW — The Franchise Dashboard
-         ======================================================== -->
     <section id="view-main-menu" class="view active">
-
-      <!-- HEADER 10% — CC badge / logo+stars / year badge -->
       <div class="menu-header">
         <div class="cc-badge">
           <span class="cc-amount" id="header-cc">0</span><span class="cc-coin">C</span><span class="cc-c">C</span>
@@ -39,19 +30,17 @@
         <div class="year-badge" id="year-badge">Y1</div>
       </div>
 
-      <!-- SCHEDULE BANNER 25% — neon timeline rail with week nodes -->
       <div class="schedule-strip" id="schedule-strip">
-        <div class="schedule-track" id="schedule-track"><!-- week pills injected by JS --></div>
+        <div class="schedule-track" id="schedule-track"></div>
       </div>
 
-      <!-- MAIN CONTENT GRID 50% — standings + metrics -->
       <div class="menu-grid">
         <div class="standings-box">
           <div class="standings-title"><span>LEAGUE STANDINGS</span></div>
           <div class="standings-header">
             <span></span><span>W</span><span>L</span><span>T</span>
           </div>
-          <div class="standings-list" id="standings-list"><!-- injected --></div>
+          <div class="standings-list" id="standings-list"></div>
         </div>
         <div class="metrics-panel">
           <div class="fan-meter">
@@ -78,7 +67,6 @@
         </div>
       </div>
 
-      <!-- FOOTER 15% — Navigation hub -->
       <nav class="nav-hub" id="nav-hub">
         <button class="nav-btn nav-btn-icon" data-route="view-settings" title="Settings">&#128295;</button>
         <button class="nav-btn" data-route="view-frontoffice">FRONT OFFICE</button>
@@ -88,16 +76,12 @@
       </nav>
     </section>
 
-    <!-- ========================================================
-         SETTINGS VIEW
-         ======================================================== -->
     <section id="view-settings" class="view">
       <header class="view-header">
         <button class="back-btn" data-back="view-main-menu">&lt; BACK</button>
         <h2>SETTINGS</h2>
       </header>
       <div class="view-content">
-
         <div class="setting-block">
           <div class="setting-title">Quarter Length</div>
           <div class="btn-row" id="quarter-length-row">
@@ -106,7 +90,6 @@
             <button class="choice-btn" data-quarter="5">5 MIN</button>
           </div>
         </div>
-
         <div class="setting-block">
           <div class="setting-title">Difficulty</div>
           <div class="btn-row" id="difficulty-row">
@@ -116,25 +99,19 @@
             <button class="choice-btn" data-difficulty="extreme">EXTREME</button>
           </div>
         </div>
-
         <div class="setting-block">
           <div class="setting-title">Franchise</div>
-          <button class="danger-btn" id="btn-exit-game">EXIT GAME (RESET SAVE)</button>
+          <button class="danger-btn" id="btn-exit-game">RESET SAVE</button>
         </div>
-
       </div>
     </section>
 
-    <!-- ========================================================
-         FRONT OFFICE VIEW
-         ======================================================== -->
     <section id="view-frontoffice" class="view">
       <header class="view-header">
         <button class="back-btn" data-back="view-main-menu">&lt; BACK</button>
         <h2>FRONT OFFICE</h2>
       </header>
       <div class="view-content">
-
         <div class="fo-summary">
           <div class="fo-summary-card">
             <span class="fo-summary-label">COACHING CREDITS</span>
@@ -176,100 +153,63 @@
 
         <div class="fo-section">
           <div class="fo-section-title">STAFF</div>
-          <div class="staff-current" id="staff-current"><!-- injected --></div>
+          <div class="staff-current" id="staff-current"></div>
           <div class="fo-section-subtitle">AVAILABLE HIRES</div>
-          <div class="staff-list" id="staff-list"><!-- injected --></div>
+          <div class="staff-list" id="staff-list"></div>
         </div>
 
         <div class="fo-section">
           <div class="fo-section-title">FREE AGENTS</div>
-          <div class="freeagent-list" id="freeagent-list"><!-- injected --></div>
+          <div class="freeagent-list" id="freeagent-list"></div>
         </div>
-
-        <div class="fo-section">
-          <div class="fo-section-title">DRAFT PICKS</div>
-          <div class="draft-list" id="draft-list"><!-- injected --></div>
-        </div>
-
       </div>
     </section>
 
-    <!-- ========================================================
-         ROSTER VIEW
-         ======================================================== -->
     <section id="view-roster" class="view">
       <header class="view-header">
         <button class="back-btn" data-back="view-main-menu">&lt; BACK</button>
         <h2>ROSTER</h2>
       </header>
       <div class="view-content">
-
         <div class="roster-summary">
           <span class="status-value stars" id="roster-off-stars">★★★☆☆</span>
           <span class="status-value stars" id="roster-def-stars">★★★☆☆</span>
           <span class="fo-summary-value" id="roster-cap">$0M / $0M</span>
         </div>
-
         <div class="roster-group-title">STARTERS</div>
-        <div class="roster-list" id="roster-starters"><!-- injected --></div>
-
+        <div class="roster-list" id="roster-starters"></div>
         <div class="roster-group-title">BENCH</div>
-        <div class="roster-list" id="roster-bench"><!-- injected --></div>
-
+        <div class="roster-list" id="roster-bench"></div>
       </div>
     </section>
 
-    <!-- ========================================================
-         HALL OF FAME VIEW
-         ======================================================== -->
     <section id="view-hof" class="view">
       <header class="view-header">
         <button class="back-btn" data-back="view-main-menu">&lt; BACK</button>
         <h2>HALL OF FAME</h2>
       </header>
       <div class="view-content">
-
         <div class="fo-section">
           <div class="fo-section-title">CHAMPIONSHIPS</div>
           <div class="hof-rings" id="hof-rings">0 FINALS WON</div>
         </div>
-
         <div class="fo-section">
           <div class="fo-section-title">ACHIEVEMENTS</div>
-          <div class="achievement-list" id="achievement-list"><!-- injected --></div>
+          <div class="achievement-list" id="achievement-list"></div>
         </div>
-
-        <div class="fo-section">
-          <div class="fo-section-title">ALL-TIME PLAYER RECORDS</div>
-          <div class="records-list" id="records-list"><!-- injected --></div>
-        </div>
-
-        <div class="fo-section">
-          <div class="fo-section-title">RETIRED LEGENDS (PLAYER HOF)</div>
-          <div class="legends-list" id="legends-list"><!-- injected --></div>
-        </div>
-
       </div>
     </section>
 
-    <!-- ========================================================
-         PRE-GAME VIEW ("Play Next Game")
-         ======================================================== -->
     <section id="view-pregame" class="view">
       <header class="view-header">
         <button class="back-btn" data-back="view-main-menu">&lt; BACK</button>
         <h2>NEXT GAME</h2>
       </header>
       <div class="view-content">
-
         <div class="matchup-box">
-          <div class="matchup-team">
-            <span class="matchup-name" id="matchup-home-name">RETRO HOOPS</span>
-          </div>
+          <div class="matchup-team"><span class="matchup-name" id="matchup-home-name">RETRO HOOPS</span></div>
           <span class="matchup-vs">VS</span>
-          <div class="matchup-team">
-            <span class="matchup-name" id="matchup-away-name">OPPONENT</span>
-          </div>
+          <div class="matchup-team"><span class="matchup-name" id="matchup-away-name">OPPONENT</span></div>
         </div>
 
         <div class="fo-section">
@@ -278,30 +218,20 @@
             <button class="choice-btn" data-uniform="home">HOME</button>
             <button class="choice-btn" data-uniform="away">AWAY</button>
           </div>
-          <div class="uniform-preview" id="uniform-preview"></div>
-        </div>
-
-        <div class="fo-section">
-          <div class="fo-section-title">LINEUP</div>
-          <div class="lineup-quick" id="lineup-quick"><!-- injected mini starters list --></div>
-          <div class="fo-section-subtitle">Tap a starter to swap with bench</div>
+          <div class="uniform-preview" id="uniform-preview" style="background-color: #0F52BA;"></div>
         </div>
 
         <div class="pregame-actions">
           <button class="action-btn" id="btn-quicksim-game">QUICK SIM GAME</button>
           <button class="nav-btn-primary action-btn" id="btn-tipoff">TIP OFF</button>
         </div>
-
       </div>
     </section>
 
-    <!-- ========================================================
-         ACTIVE GAMEPLAY VIEW — canvas court
-         ======================================================== -->
     <section id="view-game" class="view view-game">
       <div class="game-hud-top">
         <span class="hud-score" id="hud-score-home">0</span>
-        <span class="hud-clock" id="hud-clock">12:00</span>
+        <span class="hud-clock" id="hud-clock">2:00</span>
         <span class="hud-quarter" id="hud-quarter">Q1</span>
         <span class="hud-score" id="hud-score-away">0</span>
       </div>
@@ -317,30 +247,14 @@
 
       <div class="game-log" id="game-log"></div>
 
-      <div class="game-stat-callout" id="game-stat-callout">
-        <div class="gsc-row">
-          <span class="gsc-name" id="gsc-name">—</span>
-          <span class="gsc-pos" id="gsc-pos">—</span>
-        </div>
-        <div class="gsc-stats">
-          <div class="gsc-stat"><span class="gsc-stat-label">PTS</span><span class="gsc-stat-val" id="gsc-pts">0</span></div>
-          <div class="gsc-stat"><span class="gsc-stat-label">REB</span><span class="gsc-stat-val" id="gsc-reb">0</span></div>
-          <div class="gsc-stat"><span class="gsc-stat-label">AST</span><span class="gsc-stat-val" id="gsc-ast">0</span></div>
-        </div>
-      </div>
-
       <div class="game-hud-bottom">
-        <span class="control-hint">WASD/ARROWS MOVE · X PASS · Z/SPACE SHOOT</span>
+        <span class="control-hint">WASD/ARROWS MOVE · SPACE BAR TO SHOOT / TAP FOR PASS</span>
         <div class="game-controls">
-          <button class="action-btn small-btn" id="btn-quicksim-quarter">SIM QUARTER</button>
-          <button class="action-btn small-btn" id="btn-exit-court">EXIT TO MENU</button>
+          <button class="action-btn small-btn" id="btn-exit-court">QUIT GAME</button>
         </div>
       </div>
     </section>
 
-    <!-- ========================================================
-         PLAYER DETAIL OVERLAY
-         ======================================================== -->
     <div id="overlay-player-detail" class="overlay">
       <div class="overlay-card">
         <button class="overlay-close" id="player-detail-close">&times;</button>
@@ -349,17 +263,11 @@
           <span class="pd-meta" id="pd-meta">POS · AGE</span>
         </div>
         <div class="pd-stars" id="pd-stars">★★★☆☆</div>
-
-        <div class="pd-attributes" id="pd-attributes"><!-- injected attribute bars --></div>
-
-        <div class="pd-stats" id="pd-stats"><!-- injected season stats --></div>
-
+        <div class="pd-attributes" id="pd-attributes"></div>
+        <div class="pd-stats" id="pd-stats"></div>
         <div class="pd-contract" id="pd-contract">Contract: $0M</div>
-
         <div class="pd-actions">
-          <button class="action-btn" id="pd-btn-meeting">MEETING</button>
-          <button class="action-btn" id="pd-btn-trade">TRADE</button>
-          <button class="action-btn" id="pd-btn-bench">BENCH</button>
+          <button class="action-btn" id="pd-btn-bench">SWAP LINEUP</button>
         </div>
       </div>
     </div>
